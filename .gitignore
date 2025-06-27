@@ -194,4 +194,4 @@ cython_debug/
 .cursorindexingignore
 
 # Project specific files
-data/reports/
+src/data/reports/
