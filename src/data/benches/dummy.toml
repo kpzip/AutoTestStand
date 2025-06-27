@@ -1,0 +1,5 @@
+[bench]
+name = "Dummy Bench"
+channels = 5
+get_pvs = []
+set_pvs = []

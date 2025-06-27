@@ -1,0 +1,9 @@
+[in_20_emcor_01]
+name = "IN20 EMCOR 1"
+channels = 16
+
+[in_20_emcor_01.pvs]
+iact = "MCOR:IN20:1{channel:02d}:IACT"
+isetpt = "MCOR:IN20:1{channel:02d}:ISETPT"
+temp = "MCOR:IN20:100:CRATE_TEMP_DEGF"
+ramp_state = "MCOR:IN20:1{channel:02d}:RAMPSTATE"

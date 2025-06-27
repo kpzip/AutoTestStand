@@ -1,0 +1,63 @@
+import os
+import toml
+from pathlib import Path
+
+supplies_definition_dir = Path(__file__).resolve().parent.parent / "data" / "supplies"
+
+def from_dict(n: str, d: dict):
+	name = d.get("name")
+	max_current = d.get("max_current")
+	min_current = d.get("min_current")
+	# Basic input validation
+	if name is None:
+		raise ValueError(f"[Error] No name specified for power supply type `{n}`. Power supply type will not be available.")
+	if max_current is None:
+		raise ValueError(f"[Error] No maximum current value set for power supply type `{n}`. Power supply type will not be available.")
+	if min_current is None:
+		raise ValueError(f"[Error] No minimum current value set for power supply type `{n}`. Power supply type will not be available.")
+	# Make sure the types are correct
+	if not isinstance(name, str):
+		raise TypeError(f"[Error] Name for power supply type `{n}` must be of type `String`. Power supply type will not be available.")
+	if not isinstance(max_current, int) and not isinstance(max_current, float):
+		raise TypeError(f"[Error] Maximum current value for power supply type `{n}` must be a valid number. Power supply type will not be available.")
+	if not isinstance(max_current, int) and not isinstance(max_current, float):
+		raise TypeError(f"[Error] Minimum current value for power supply type `{n}` must be a valid number. Power supply type will not be available.")
+	return PowerSupplyType(max_current, min_current, name, n)
+
+def load_power_supply_types():
+	types_list: list = []
+	supply_types: dict = {}
+	for entry in os.listdir(supplies_definition_dir):
+		full_path = os.path.join(supplies_definition_dir, entry)
+		if os.path.isfile(full_path) and full_path.endswith(".toml"):
+			with open(full_path, "r") as tfile:
+				try:
+					val = toml.load(tfile)
+					for k, v in val.items():
+						supply_types[k] = v
+				except toml.TomlDecodeError as e:
+					print(f"[Error] Invalid syntax in power supply definition file at: `{full_path}`. Skipping...")
+					print(e)
+	
+	for n, s in supply_types.items():
+		try:
+			types_list.append(from_dict(n, s))
+		except Exception as e:
+			print(e)	
+	return types_list
+
+
+
+class PowerSupplyType:
+
+	def __init__(self, max_current, min_current, name, psid):
+		self.name = name
+		self.max_current = max_current
+		self.min_current = min_current
+		self.psid = psid
+
+	def __str__(self):
+		return f"Power supply type `{self.name}` with min current {self.min_current:.5f}A and max current {self.max_current:.5f}A"
+
+
+supply_types = load_power_supply_types()
