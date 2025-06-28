@@ -5,7 +5,7 @@ import epics
 
 benches_definition_dir = Path(__file__).resolve().parent.parent / "data" / "benches"
 
-def from_dict(n: str, d: dict):
+def from_dict(n: str, d: dict, try_connect=True):
 	name = d.get("name")
 	channels = d.get("channels")
 
@@ -37,7 +37,7 @@ def from_dict(n: str, d: dict):
 		raise TypeError(f"[Error] Name for test bench `{n}` must be of type `String`. Test bench will not be available.")
 	if not isinstance(channels, int):
 		raise TypeError(f"[Error] The number of channels for test bench `{n}` must be an integer. Test bench will not be available.")
-
+    
 	for k, v in pvs.items():
 		if not isinstance(v, list):
 			if isinstance(v, str):
@@ -50,15 +50,16 @@ def from_dict(n: str, d: dict):
 	# Try connecting to PVs
 	pvs = {k: [epics.PV(p) for p in v] for k, v in pvs.items()}
 	
+	if try_connect:
 	# Warning message if any pv failed to connect
-	for k, v in pvs.items():
-		for p in v:
-			if not p.wait_for_connection():
-				print("[Warning] PV `{p.pvname}` failed to connect. Maybe its name has changed?")
+		for k, v in pvs.items():
+			for p in v:
+				if not p.wait_for_connection():
+					print("[Warning] PV `{p.pvname}` failed to connect. Maybe its name has changed?")
 	
 	return TestBench(name, channels, pvs, n)
 
-def load_test_benches():
+def load_test_benches(try_connect=True):
 	benches_list: list = []
 	benches: dict = {}
 	for entry in os.listdir(benches_definition_dir):
@@ -75,7 +76,7 @@ def load_test_benches():
 	
 	for n, b in benches.items():
 		try:
-			benches_list.append(from_dict(n, b))
+			benches_list.append(from_dict(n, b, try_connect=try_connect))
 		except Exception as e:
 			print(e)	
 	return benches_list
@@ -93,4 +94,4 @@ class TestBench:
 	def __str__(self):
 		return f"Test Bench `{self.name}` with {self.channels} channel(s)"
 
-benches = load_test_benches()
+benches = load_test_benches(try_connect=False)
