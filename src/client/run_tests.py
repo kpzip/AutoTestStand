@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
 
 from common.power_supply import *
 from common.test_bench import *
@@ -151,6 +152,7 @@ def submit():
 			bench=i
 			break
 	if bench is None:
+		messagebox.showerror(title="Error", message="Please select a test bench.", parent=run_tests_toplevel)
 		return
 	for i in range(bench.channels):
 		if channel_info[i].include.get():
@@ -160,14 +162,20 @@ def submit():
 					supply = s
 					break
 			if supply is None:
+				messagebox.showerror(title="Error", message=f"Please select a power supply for channel {i+1}", parent=run_tests_toplevel)
 				return
 			serial = channel_info[i].serial.get()
 			if serial == "":
 				serial = "unknown"
 			test_infos.append(SupplyTestInfo(i, serial, supply.psid, list(map(lambda t: t.get_test(), channel_info[i].tests))))
-	test_request = RunTestRequest(bench.tbid, test_infos)
-	success = test_request.send()
-	exit()
+	try:
+		test_request = RunTestRequest(bench.tbid, test_infos)
+		response = test_request.send()
+		response.raise_for_status()
+		messagebox.showinfo(title="Success", message="Tests Successfully started.", parent=run_tests_toplevel)
+		exit()
+	except Exception as e:
+		messagebox.showerror(title="Error", message=f"There was an error starting tests. {e}", parent=run_tests_toplevel)
 
 def run_tests_window(root):
 	global run_tests_toplevel, run_tests_frame, run_tests_channel_info, scroll_frame, run_tests_selected_bench

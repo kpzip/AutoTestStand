@@ -54,7 +54,7 @@ class SupplyTestInfo:
 
 class Report:
 	
-	def __init__(self, bench: str, time: int):
+	def __init__(self, bench: str, time: int, status: str):
 		self.bench = None
 		for b in tb.benches:
 			if b.tbid == bench:
@@ -63,9 +63,15 @@ class Report:
 		if self.bench is None:
 			raise ValueError(f"No Bench with id `{bench}`!")
 		self.time = time
+		self.status = status
 	
 	def from_dict(d):
-		return Report(d["bench"], d["time"])
+		return Report(d["bench"], d["time"], d["status"])
+
+	def __eq__(self, rhs):
+		if rhs is None:
+			return False
+		return self.bench.tbid == rhs.bench.tbid and self.time == rhs.time and self.status == rhs.status
 
 class ReportsList:
 	
@@ -77,17 +83,23 @@ class ReportsList:
 	def from_dict(d):
 		return ReportsList(list(map(Report.from_dict, d["tests"])), d["total"], d["page_size"])
 
+	def __eq__(self, rhs):
+		if rhs is None:
+			return False
+		return self.tests == rhs.tests and self.total == rhs.total and self.page_size == rhs.page_size
+
 def get_reports_list():
 	resp = requests.get(address + reports_path, headers=get_headers)
 	return ReportsList.from_dict(json.loads(resp.text))
 
 class SupplyTestReport:
 	
-	def __init__(self, channel: int, test_number: int, supply_type_name: str, serial_num: str):
+	def __init__(self, channel: int, test_number: int, supply_type_name: str, serial_num: str, status: str):
 		self.channel = channel
 		self.test_number = test_number
 		self.serial_num = serial_num
 		self.supply_type = None
+		self.status = status
 		for s in ps.supply_types:
 			if s.psid == supply_type_name:
 				self.supply_type = s
@@ -96,7 +108,7 @@ class SupplyTestReport:
 			raise ValueError(f"No Supply with id `{supply_type_name}`!")
 
 	def from_dict(d):
-		return SupplyTestReport(d["channel"], d["test_num"], d["supply_type"], d["serial_num"])
+		return SupplyTestReport(d["channel"], d["test_num"], d["supply_type"], d["serial_num"], d["status"])
 
 class SupplyTestReportList:
 	

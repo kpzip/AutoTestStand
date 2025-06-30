@@ -117,7 +117,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 				number = 1000
 			else:
 				number = number[0]
-			completed_tests = []
+			tests_list = []
 			folders = []
 			path = server.test_runner.saved_data_dir
 			for item in os.listdir(path):
@@ -133,13 +133,17 @@ class RequestHandler(BaseHTTPRequestHandler):
 				time_ms = int(datetime.strptime(time, server.test_runner.date_f_string).timestamp())
 				if tbid not in list(map(lambda e: e.tbid, test_bench.benches)):
 					continue
-				completed_tests.append({"bench": tbid, "time": time_ms})
-			print(completed_tests)
-			total = len(completed_tests)
-			completed_tests.sort(reverse=True, key=lambda e: e["time"])
-			completed_tests = completed_tests[:number]
+				tests_list.append({"bench": tbid, "time": time_ms, "status": "completed"})
+			print(tests_list)
+			for t in server.test_runner.test_queue:
+				tests_list.append({"bench": t.test_info.bench.tbid, "time": int(t.time_requested / 1000), "status": "queued"})
+			for t in server.test_runner.running_tests:
+				tests_list.append({"bench": t.test_info.bench.tbid, "time": int(t.start_time / 1000), "status": "running"})
+			total = len(tests_list)
+			tests_list.sort(reverse=True, key=lambda e: e["time"])
+			tests_list = tests_list[:number]
 			status = 200
-			response_message["tests"] = completed_tests
+			response_message["tests"] = tests_list
 			response_message["total"] = total
 			response_message["page_size"] = number
 		elif parsed_path.path.startswith("/reports") and not parsed_path.path.endswith(".csv"):
@@ -149,8 +153,29 @@ class RequestHandler(BaseHTTPRequestHandler):
 				time = int(split[3])
 				name = bench + datetime.fromtimestamp(time).strftime(server.test_runner.date_f_string)
 				path = server.test_runner.saved_data_dir / name
-				if os.path.exists(path):
-					tests = []
+				queued_test = None
+				running_test = None
+				for t in server.test_runner.test_queue:
+					if t.test_info.bench.tbid == bench and int(t.time_requested / 1000) == time:
+						queued_test = t
+						break
+				for t in server.test_runner.running_tests:
+					if t.test_info.bench.tbid == bench and int(t.start_time / 1000) == time:
+						running_test = t
+						break
+				tests = []
+				if queued_test is not None:
+					for st in queued_test.test_info.supply_test_info:
+						for i in range(len(st.tests)):
+							t = st.tests[i]
+							tests.append({"channel": st.channel + 1, "test_num": i + 1, "supply_type": st.supply_type.psid, "serial_num": st.serial_num, "status": "queued"})
+				elif running_test is not None:
+					for st in running_test.test_info.supply_test_info:
+						for i in range(len(st.tests)):
+							t = st.tests[i]
+							status = "queued" if i > st.test_number else ("running" if i == st.test_number else "completed")
+							tests.append({"channel": st.channel + 1, "test_num": i + 1, "supply_type": st.supply_type.psid, "serial_num": st.serial_num, "status": status})
+				elif os.path.exists(path):
 					files = []
 					for item in os.listdir(path):
 						item_path = os.path.join(path, item)
@@ -165,12 +190,12 @@ class RequestHandler(BaseHTTPRequestHandler):
 							channel = int(split2[0].removeprefix("ch"))
 							test_num = int(split2[1].removeprefix("test"))
 							serial_num = split2[2]
-							tests.append({"channel": channel, "test_num": test_num, "supply_type": psid, "serial_num": serial_num})
+							tests.append({"channel": channel, "test_num": test_num, "supply_type": psid, "serial_num": serial_num, "status": "completed"})
 					tests.sort(key=lambda e: e["test_num"])
 					tests.sort(key=lambda e: e["channel"])
-					status = 200
-					response_message["tests"] = tests
-					response_message["total"] = len(tests)
+				status = 200
+				response_message["tests"] = tests
+				response_message["total"] = len(tests)
 		elif parsed_path.path.startswith("/reports") and parsed_path.path.endswith(".csv"):
 			split = parsed_path.path.split("/")
 			if len(split) == 5:

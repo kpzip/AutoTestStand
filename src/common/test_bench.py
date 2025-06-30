@@ -18,7 +18,7 @@ def from_dict(n: str, d: dict, try_connect=True):
 	if channels is None:
 		raise ValueError(f"[Error] No number of channels set for test bench `{n}`. Test bench will not be available.")
 	if pvs is None:
-		raise ValueError(f"[Error No PVs specified for test bench `{n}`. Test bench will not be available.]")
+		raise ValueError(f"[Error] No PVs specified for test bench `{n}`. Test bench will not be available.")
 	
 	# Usually PVs have uppercase names, but its not standard in TOML
 	pvs = {k.replace("_", "").upper(): v for k, v in pvs.items()}
@@ -41,7 +41,10 @@ def from_dict(n: str, d: dict, try_connect=True):
 	for k, v in pvs.items():
 		if not isinstance(v, list):
 			if isinstance(v, str):
-				pvs[k] = [v.format(channel=c+1) for c in range(channels)]
+				try:
+					pvs[k] = [v.format(channel=c+1) for c in range(channels)]
+				except Exception as e:
+					print(f"An unexpected error occurred during formatting. Please check your syntax! {type(e).__name__} - {e}")
 			else:
 				raise TypeError(f"[Error] {k} PVs for test bench `{n}`. must be a valid list or format string. Test bench will not be available.")
 		elif len(v) != channels:

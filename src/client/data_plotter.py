@@ -1,6 +1,10 @@
 import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
 
 def show_plots(data, temp_units="F"):
+	#pd.set_option('display.max_rows', None)
+	#print(data.iloc[12000:13000])
 	
 	fig, (ax1, ax3) = plt.subplots(2)
 	
@@ -8,11 +12,12 @@ def show_plots(data, temp_units="F"):
 	iact = data["IACT"]
 	isetpt = data["ISETPT"]
 	temp = data["TEMP"]
-	error = data["PPMERR"]
+	error = data.loc[np.logical_not(data["RAMPSTATE"]), "PPMERR"]
+	temp_noramp = data.loc[np.logical_not(data["RAMPSTATE"]), "TEMP"]
 	
 	
 	temp_c = (temp - 32) * (5/9)
-	
+	temp_noramp_c = (temp_noramp - 32) * (5/9)
 	
 	ax1.set_xlabel("Time (ms)")
 	ax1.set_ylabel("Current (A)")
@@ -39,10 +44,17 @@ def show_plots(data, temp_units="F"):
 	ax3.set_xlabel(f"Temperature ({temp_units})")
 	ax3.set_ylabel("Error (PPM)")
 
-	ax3.scatter(temp if temp_units == "F" else temp_c, error, label="Error", color="red")
+	ax3.scatter(temp_noramp if temp_units == "F" else temp_noramp_c, error, label="Error", color="red")
+
+	m, b = np.polyfit(temp_noramp if temp_units == "F" else temp_noramp_c, error, 1)
+
+	bestfit_x = np.linspace(temp.min(), temp.max(), 100)
+	bestfit_y = m * bestfit_x + b
+
+	ax3.plot(bestfit_x, bestfit_y, color="red")
 	
 	ax3.legend()
 
-	#fig.tight_layout()
+	fig.tight_layout()
 	
 	plt.show()

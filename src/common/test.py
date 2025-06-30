@@ -10,7 +10,7 @@ class Test(ABC):
 		self.saved_data = pd.DataFrame(columns=["TIME", "ISETPT", "IACT", "TEMP", "RAMPSTATE", "TIMEHRS"])
 
 	def record_data(self, pvs, ms_since_test_started: int):
-		self.saved_data.loc[len(self.saved_data)] = [ms_since_test_started, pvs["ISETPT"].get(), pvs["IACT"].get(), pvs["TEMP"].get(), bool(pvs["RAMPSTATE"].get()), ms_since_test_started / (60 * 60 * 100)]
+		self.saved_data.loc[len(self.saved_data)] = [ms_since_test_started, pvs["ISETPT"].get(), pvs["IACT"].get(), pvs["TEMP"].get(), not bool(pvs["RAMPSTATE"].get()), ms_since_test_started / (60 * 60 * 100)]
 
 	def add_calculated_data(self, supply):
 		cond = np.logical_not(self.saved_data["RAMPSTATE"])

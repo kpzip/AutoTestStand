@@ -15,6 +15,7 @@ class TestRequestState:
 	def __init__(self, test_info):
 		self.test_info = test_info
 		self.start_time = None
+		self.time_requested = time.time() * 1000
 
 	def start(self):
 		self.start_time = time.time() * 1000
@@ -55,22 +56,23 @@ def test_loop():
 					if finished:
 						print("finished")
 						curr_test.finish(pvs)
+						batch_name = test.test_info.bench.tbid + datetime.fromtimestamp(test.start_time / 1000).strftime(date_f_string)
+						directory = saved_data_dir / batch_name
+						directory.mkdir(parents=True, exist_ok=True)
+						
+						filename = "ch" + str(supply_test.channel + 1) + "-test" + str(supply_test.test_number + 1) + "-" + supply_test.serial_num + "--" +  supply_test.supply_type.psid + ".csv"
+						loc = directory / filename
+						curr_test.add_calculated_data(supply_test.supply_type)
+						curr_test.saved_data.to_csv(loc, index=False)
+				
+						
 						supply_test.is_started = False
 						supply_test.test_number += 1
 						if supply_test.test_number >= len(supply_test.tests):
 							supply_test.is_finished = True
 			if not not_finished:
 				finished = running_tests.pop(idx)
-				batch_name = test.test_info.bench.tbid + datetime.fromtimestamp(test.start_time / 1000).strftime(date_f_string)
-				directory = saved_data_dir / batch_name
-				directory.mkdir(parents=True, exist_ok=True)
-				for supply_test in test.test_info.supply_test_info:
-					for i in range(len(supply_test.tests)):
-						curr_test = supply_test.tests[i]
-						filename = "ch" + str(supply_test.channel + 1) + "-test" + str(i + 1) + "-" + supply_test.serial_num + "--" +  supply_test.supply_type.psid + ".csv"
-						loc = directory / filename
-						curr_test.add_calculated_data(supply_test.supply_type)
-						curr_test.saved_data.to_csv(loc, index=False)
 				break
+		time.sleep(0.5)
 		if request_close:
 			break
