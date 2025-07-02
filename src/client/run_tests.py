@@ -2,6 +2,8 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 
+import copy
+
 from common.power_supply import *
 from common.test_bench import *
 
@@ -60,6 +62,18 @@ def set_all(channel_info, state):
 	for i in channel_info:
 		i.include.set(state)
 
+def set_default_tests():
+	for chi in channel_info:
+		if chi.include.get():
+			ps = None
+			for s in supply_types:
+				if s.name == chi.supply_type.get():
+					ps = s
+			if ps is None:
+				continue
+			chi.tests = list(map(TestWrapper, map(copy.deepcopy, ps.default_tests)))
+	messagebox.showinfo(title="Success", message="Default tests applied", parent=run_tests_toplevel)
+
 def populate_test_channel_info(*args, **kwargs):
 	# clear out the channel area and re-render
 	#for child in run_tests_channel_info.winfo_children():
@@ -116,7 +130,7 @@ def populate_test_channel_info(*args, **kwargs):
 		all_include = Checkbutton(inner_table, variable=all_include_state, command=lambda: set_all(channel_info, all_include_state.get())).grid(row=2, column=2) 
 		
 		Button(inner_table, text="Auto Detect", width=25).grid(row=2, column=4, padx=8, pady=8, sticky="ew")
-		Button(inner_table, text="Use Default Tests", width=20).grid(row=2, column=5)
+		Button(inner_table, text="Use Default Tests", width=20, command=set_default_tests).grid(row=2, column=5)
 		
 		supply_options = list(map(lambda p: p.name, supply_types))
 

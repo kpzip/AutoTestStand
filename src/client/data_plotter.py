@@ -12,18 +12,22 @@ def show_plots(data, temp_units="F"):
 	iact = data["IACT"]
 	isetpt = data["ISETPT"]
 	temp = data["TEMP"]
-	error = data.loc[np.logical_not(data["RAMPSTATE"]), "PPMERR"]
-	temp_noramp = data.loc[np.logical_not(data["RAMPSTATE"]), "TEMP"]
+	error = data["PPMERR"]
+
+	noramp_cond = np.logical_not(data["RAMPSTATE"])
 	
+	temp_noramp = data.loc[noramp_cond, "TEMP"]
+	error_noramp = data.loc[noramp_cond, "PPMERR"]
 	
 	temp_c = (temp - 32) * (5/9)
-	temp_noramp_c = (temp_noramp - 32) * (5/9)
+	temp_c_noramp = (temp_noramp - 32) * (5/9)
 	
 	ax1.set_xlabel("Time (ms)")
 	ax1.set_ylabel("Current (A)")
 
 	ax1.plot(time, iact, label="Output Current", color="blue")
 	ax1.plot(time, isetpt, label="Set Point", color="orange")
+	ax1.plot(time, error, label="Error", color="green")
 
 	ax1.legend()
 	
@@ -44,9 +48,11 @@ def show_plots(data, temp_units="F"):
 	ax3.set_xlabel(f"Temperature ({temp_units})")
 	ax3.set_ylabel("Error (PPM)")
 
-	ax3.scatter(temp_noramp if temp_units == "F" else temp_noramp_c, error, label="Error", color="red")
+	ax3.scatter(temp if temp_units == "F" else temp_c, error, label="Error", color="red")
 
-	m, b = np.polyfit(temp_noramp if temp_units == "F" else temp_noramp_c, error, 1)
+	m, b = np.polyfit(temp_noramp if temp_units == "F" else temp_c_noramp, error_noramp, 1)
+	
+	print(f"Temperature Coefficient: {m} ppm/{temp_units}")
 
 	bestfit_x = np.linspace(temp.min(), temp.max(), 100)
 	bestfit_y = m * bestfit_x + b

@@ -1,0 +1,84 @@
+[mcor1]
+name = "MCOR 1A"
+max_current = 1
+min_current = -1
+
+[[mcor1.diagnostic_tests]]
+type = "constant_current"
+name = "Positive max. current test"
+current = 1
+duration = 5
+
+[[mcor1.diagnostic_tests]]
+type = "constant_current"
+name = "Negative max. current test"
+current = -1
+duration = 5
+
+[mcor2]
+name = "MCOR 2A"
+max_current = 2
+min_current = -2
+
+[[mcor2.diagnostic_tests]]
+type = "constant_current"
+name = "Positive max. current test"
+current = 2
+duration = 5
+
+[[mcor2.diagnostic_tests]]
+type = "constant_current"
+name = "Negative max. current test"
+current = -2
+duration = 5
+
+[mcor6]
+name = "MCOR 12A"
+max_current = 6
+min_current = -6
+
+[[mcor6.diagnostic_tests]]
+type = "constant_current"
+name = "Positive max. current test"
+current = 6
+duration = 5
+
+[[mcor6.diagnostic_tests]]
+type = "constant_current"
+name = "Negative max. current test"
+current = -6
+duration = 5
+
+[mcor12]
+name = "MCOR 12A"
+max_current = 12
+min_current = -12
+
+[[mcor12.diagnostic_tests]]
+type = "constant_current"
+name = "Positive max. current test"
+current = 12
+duration = 5
+
+[[mcor12.diagnostic_tests]]
+type = "constant_current"
+name = "Negative max. current test"
+current = -12
+duration = 5
+
+[mcor30]
+name = "MCOR 30A"
+max_current = 30
+min_current = -30
+
+[[mcor30.diagnostic_tests]]
+type = "constant_current"
+name = "Positive max. current test"
+current = 30
+duration = 5
+
+[[mcor30.diagnostic_tests]]
+type = "constant_current"
+name = "Negative max. current test"
+current = -30
+duration = 5

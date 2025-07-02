@@ -110,6 +110,11 @@ class SupplyTestReport:
 	def from_dict(d):
 		return SupplyTestReport(d["channel"], d["test_num"], d["supply_type"], d["serial_num"], d["status"])
 
+	def __eq__(self, rhs):
+		if rhs is None:
+			return False
+		return self.channel == rhs.channel and self.test_number == rhs.test_number and self.serial_num == rhs.serial_num and self.supply_type.psid == rhs.supply_type.psid and self.status == rhs.status
+
 class SupplyTestReportList:
 	
 	def __init__(self, tests: list, total: int):
@@ -118,6 +123,11 @@ class SupplyTestReportList:
 	
 	def from_dict(d):
 		return SupplyTestReportList(list(map(SupplyTestReport.from_dict, d["tests"])), d["total"])
+
+	def __eq__(self, rhs):
+		if rhs is None:
+			return False
+		return self.tests == rhs.tests and self.total == rhs.total
 
 def get_supply_test_reports_list(tbid: str, time: int):
 	resp = requests.get(address + reports_path + "/" + tbid + "/" + str(time), headers=get_headers)

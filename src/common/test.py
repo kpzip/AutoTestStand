@@ -10,13 +10,13 @@ class Test(ABC):
 		self.saved_data = pd.DataFrame(columns=["TIME", "ISETPT", "IACT", "TEMP", "RAMPSTATE", "TIMEHRS"])
 
 	def record_data(self, pvs, ms_since_test_started: int):
-		self.saved_data.loc[len(self.saved_data)] = [ms_since_test_started, pvs["ISETPT"].get(), pvs["IACT"].get(), pvs["TEMP"].get(), not bool(pvs["RAMPSTATE"].get()), ms_since_test_started / (60 * 60 * 100)]
+		self.saved_data.loc[len(self.saved_data)] = [ms_since_test_started, pvs["ISETPT"].get(), pvs["IACT"].get(), pvs["TEMP"].get(), bool(pvs["RAMPSTATE"].get()), ms_since_test_started / (60 * 60 * 100)]
 
 	def add_calculated_data(self, supply):
 		cond = np.logical_not(self.saved_data["RAMPSTATE"])
 		iavg = self.saved_data.loc[cond, "IACT"].mean()
 		self.saved_data.loc[cond, "IAVG"] = iavg
-		self.saved_data.loc[cond, "PPMERR"] = (self.saved_data["IACT"] - self.saved_data["IAVG"]) / (supply.max_current if iavg > 0 else supply.min_current)
+		self.saved_data.loc[cond, "PPMERR"] = np.absolute((self.saved_data["IACT"] - self.saved_data["IAVG"]) / (supply.max_current if iavg > 0 else supply.min_current))
 	
 	def begin(self, pvs):
 		pass
@@ -35,10 +35,10 @@ class Test(ABC):
 	def to_dict(self):
 		return { "name": self.name }
 
-	def from_dict(di):
+	def from_dict(di, use_ms=True):
 		t = di["type"]
 		if t == "constant_current":
-			return ConstantCurrentTest(di["name"], di["current"], di["duration"], use_ms=True)
+			return ConstantCurrentTest(di.get("name", "Unnamed Test"), di["current"], di["duration"], use_ms=use_ms)
 		else:
 			raise ValueError(f"Unknown test type: `{t}`")
 

@@ -8,3 +8,14 @@ isetpt = "MCOR:IN20:1{channel:02d}:ISETPT"
 temp = "MCOR:IN20:100:CRATE_TEMP_DEGF"
 ramp_state = "MCOR:IN20:1{channel:02d}:RAMPSTATE"
 name = "MCOR:IN20:1{channel:02d}:NAME"
+
+[gunb_emcor_01]
+name = "GUNB EMCOR 1"
+channels = 16
+
+[gunb_emcor_01.pvs]
+iact = "MCOR:GUNB:1{channel:02d}:IACT"
+isetpt = "MCOR:GUNB:1{channel:02d}:ISETPT"
+temp = "MCOR:GUNB:100:CRATE_TEMP_DEGF"
+ramp_state = "MCOR:GUNB:1{channel:02d}:RAMPSTATE"
+name = "MCOR:GUNB:1{channel:02d}:NAME"

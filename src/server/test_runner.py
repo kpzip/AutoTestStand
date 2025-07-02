@@ -32,9 +32,25 @@ def test_loop():
 	while True:
 		# See if there are any other tests we can be running right now
 		# todo
-		if len(running_tests) == 0 and len(test_queue) != 0:
-			running_tests.append(test_queue.pop(0))
-			print("Running Test...")
+		for i in range(len(test_queue)):
+			q = test_queue[i]
+			is_conflicting = False
+			for r in running_tests:
+				if q.test_info.bench.tbid == r.test_info.bench.tbid:
+					for rst in r.test_info.supply_test_info:
+						if rst.is_finished:
+							continue
+						used_channels = list(map(lambda s: s.channel, q.test_info.supply_test_info))
+						if rst.channel in used_channels:
+							is_conflicting = True
+			if not is_conflicting:
+				running_tests.append(test_queue.pop(i))
+				print("Running Test...")
+				break	
+
+		#if len(running_tests) == 0 and len(test_queue) != 0:
+		#	running_tests.append(test_queue.pop(0))
+		#	print("Running Test...")
 		
 		for idx in range(len(running_tests)):
 			test = running_tests[idx]
@@ -47,12 +63,14 @@ def test_loop():
 					not_finished = True
 					curr_test = supply_test.tests[supply_test.test_number]
 					pvs = {k: v[supply_test.channel] for k, v in bench.pvs.items()}
+					finished = False
 					if not supply_test.is_started:
 						supply_test.time_since_last_started = time.time() * 1000
 						curr_test.begin(pvs)
 						supply_test.is_started = True
-					finished = curr_test.tick(pvs, time.time() * 1000 - supply_test.time_since_last_started, time.time() * 1000 - test.start_time)
-					curr_test.record_data(pvs, time.time() * 1000 - supply_test.time_since_last_started)
+					else:
+						finished = curr_test.tick(pvs, time.time() * 1000 - supply_test.time_since_last_started, time.time() * 1000 - test.start_time)
+						curr_test.record_data(pvs, time.time() * 1000 - supply_test.time_since_last_started)
 					if finished:
 						print("finished")
 						curr_test.finish(pvs)

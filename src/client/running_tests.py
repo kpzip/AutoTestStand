@@ -13,12 +13,12 @@ running_tests_list_frame = None
 
 prev_lst = None
 
-def refresh_tests_list(alert=False):
+def refresh_tests_list(alert=False, force_rerender=False):
 	global prev_lst
 	try:
 		lst = server_comms.get_reports_list()
 
-		if lst != prev_lst:
+		if lst != prev_lst or force_rerender:
 			prev_lst = lst
 			for c in running_tests_list_frame.winfo_children():
 				c.destroy()
@@ -39,7 +39,7 @@ def refresh_tests_list(alert=False):
 				Button(running_tests_list_frame, width=10, text="Details", command=lambda bench_id=test.bench.tbid, t=test.time, isf=is_finished: running_supply_tests.running_supply_tests_window(running_tests_toplevel, bench_id, t, isf)).grid(row=i+2, column=5)
 	except Exception as e:
 		if alert:
-			messagebox.showinfo(title="Error", message=f"Unable to load running tests: {str(e)}", parent=running_tests_toplevel)
+			messagebox.showerror(title="Error", message=f"Unable to load running tests: {str(e)}", parent=running_tests_toplevel)
 
 def running_tests_window(root):
 	global running_tests_toplevel, running_tests_list_frame
@@ -60,7 +60,7 @@ def running_tests_window(root):
 	
 		running_tests_list_frame = scroll_frame.interior
 		
-		refresh_tests_list(alert=True)
+		refresh_tests_list(alert=True, force_rerender=True)
 
 		def refresh():
 			refresh_tests_list()

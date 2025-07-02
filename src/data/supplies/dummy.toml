@@ -1,4 +1,0 @@
-[supply]
-name = "Dummy Power Supply"
-max_current = 10
-min_current = -10
