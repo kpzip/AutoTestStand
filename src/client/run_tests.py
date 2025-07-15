@@ -129,7 +129,7 @@ def populate_test_channel_info(*args, **kwargs):
 		all_include_state = BooleanVar(value=True)
 		all_include = Checkbutton(inner_table, variable=all_include_state, command=lambda: set_all(channel_info, all_include_state.get())).grid(row=2, column=2) 
 		
-		Button(inner_table, text="Auto Detect", width=25).grid(row=2, column=4, padx=8, pady=8, sticky="ew")
+		Button(inner_table, text="Auto Detect", width=25, state=DISABLED).grid(row=2, column=4, padx=8, pady=8, sticky="ew")
 		Button(inner_table, text="Use Default Tests", width=20, command=set_default_tests).grid(row=2, column=5)
 		
 		supply_options = list(map(lambda p: p.name, supply_types))

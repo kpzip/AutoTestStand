@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import pandas as pd
 import numpy as np
+import time
 
 class Test(ABC):
 
@@ -10,7 +11,7 @@ class Test(ABC):
 		self.saved_data = pd.DataFrame(columns=["TIME", "ISETPT", "IACT", "TEMP", "RAMPSTATE", "TIMEHRS"])
 
 	def record_data(self, pvs, ms_since_test_started: int):
-		self.saved_data.loc[len(self.saved_data)] = [ms_since_test_started, pvs["ISETPT"].get(), pvs["IACT"].get(), pvs["TEMP"].get(), bool(pvs["RAMPSTATE"].get()), ms_since_test_started / (60 * 60 * 100)]
+		self.saved_data.loc[len(self.saved_data)] = [ms_since_test_started, pvs["ISETPT"].get(), pvs["IACT"].get(), pvs["TEMP"].get(), bool(pvs["RAMPSTATE"].get()), ms_since_test_started / (60 * 60 * 1000)]
 
 	def add_calculated_data(self, supply):
 		cond = np.logical_not(self.saved_data["RAMPSTATE"])
@@ -18,8 +19,23 @@ class Test(ABC):
 		self.saved_data.loc[cond, "IAVG"] = iavg
 		self.saved_data.loc[cond, "PPMERR"] = np.absolute((self.saved_data["IACT"] - self.saved_data["IAVG"]) / (supply.max_current if iavg > 0 else supply.min_current))
 	
-	def begin(self, pvs):
-		pass
+	def begin(self, pvs, supply_type):
+		if state_set_point := pvs.get("STATESETPT"):
+			state_set_point.put(1)
+			# Wait for the power supply to turn on
+			if state := pvs.get("STATE"):
+				counter = 0
+				while True:
+					if state.get() == 1:
+						break
+					elif counter > 10:
+						print("failed to turn on power supply")
+						break
+					else:
+						counter += 1
+						time.sleep(0.1)
+		if (type_pv := pvs.get("TYPE")) is not None and supply_type.ename is not None:
+			type_pv.put(supply_type.ename)
 
 	def finish(self, pvs):
 		pass
@@ -54,7 +70,8 @@ class ConstantCurrentTest(Test):
 		else:
 			self.duration = duration * 60 * 60 * 1000
 
-	def begin(self, pvs):
+	def begin(self, pvs, supply_type):
+		super().begin(pvs, supply_type)
 		pvs["ISETPT"].put(self.current)
 
 	def finish(self, pvs):

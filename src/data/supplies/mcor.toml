@@ -1,7 +1,16 @@
+[spare]
+name = "Spare"
+max_current = 0
+min_current = 0
+ename = 0
+diagnostic_tests = []
+
+
 [mcor1]
 name = "MCOR 1A"
 max_current = 1
 min_current = -1
+ename = 1
 
 [[mcor1.diagnostic_tests]]
 type = "constant_current"
@@ -19,6 +28,7 @@ duration = 5
 name = "MCOR 2A"
 max_current = 2
 min_current = -2
+ename = 2
 
 [[mcor2.diagnostic_tests]]
 type = "constant_current"
@@ -33,9 +43,10 @@ current = -2
 duration = 5
 
 [mcor6]
-name = "MCOR 12A"
+name = "MCOR 6A"
 max_current = 6
 min_current = -6
+ename = 3
 
 [[mcor6.diagnostic_tests]]
 type = "constant_current"
@@ -53,6 +64,7 @@ duration = 5
 name = "MCOR 12A"
 max_current = 12
 min_current = -12
+ename = 4
 
 [[mcor12.diagnostic_tests]]
 type = "constant_current"
@@ -70,6 +82,7 @@ duration = 5
 name = "MCOR 30A"
 max_current = 30
 min_current = -30
+ename = 5
 
 [[mcor30.diagnostic_tests]]
 type = "constant_current"

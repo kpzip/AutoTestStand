@@ -1,6 +1,0 @@
-[emulator]
-name = "Power Supply Emulator"
-channels = 1
-get_pvs = ["PSC:L1B:MG01:IACT"]
-set_pvs = ["PSC:L1B:MG01:ISETPT"]
-temp_pvs = ["PSC:L1B:MG01:CONTROLTEMP"]

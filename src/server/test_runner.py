@@ -66,7 +66,7 @@ def test_loop():
 					finished = False
 					if not supply_test.is_started:
 						supply_test.time_since_last_started = time.time() * 1000
-						curr_test.begin(pvs)
+						curr_test.begin(pvs, supply_test.supply_type)
 						supply_test.is_started = True
 					else:
 						finished = curr_test.tick(pvs, time.time() * 1000 - supply_test.time_since_last_started, time.time() * 1000 - test.start_time)

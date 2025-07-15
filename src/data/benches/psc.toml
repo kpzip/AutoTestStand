@@ -1,0 +1,25 @@
+[psc_b15_mg01]
+name = "PSC B015 MG01 (Emulator)"
+channels = 1
+
+[psc_b15_mg01.pvs]
+iact = "PSC:L1B:MG01:IACT"
+isetpt = "PSC:L1B:MG01:ISETPT"
+temp = "PSC:L1B:MG01:CONTROL_TEMP"
+ramp_state = "PSC:L1B:MG01:RAMPSTATE"
+name = "PSC:L1B:MG01:MAGNETID"
+state = "PSC:L1B:MG01:STATE"
+statesetpt = "PSC:L1B:MG01:STATESETPT"
+
+[psc_b15_mg02]
+name = "PSC B015 MG02"
+channels = 1
+
+[psc_b15_mg02.pvs]
+iact = "PSC:B15:MG02:IACT"
+isetpt = "PSC:B15:MG02:ISETPT"
+temp = "PSC:B15:MG02:CONTROL_TEMP"
+ramp_state = "PSC:B15:MG02:RAMPSTATE"
+name = "PSC:B15:MG02:MAGNETID"
+state = "PSC:B15:MG02:STATE"
+statesetpt = "PSC:B15:MG02:STATESETPT"

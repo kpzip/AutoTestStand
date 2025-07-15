@@ -52,7 +52,7 @@ def show_plots(data, temp_units="F"):
 
 	m, b = np.polyfit(temp_noramp if temp_units == "F" else temp_c_noramp, error_noramp, 1)
 	
-	print(f"Temperature Coefficient: {m} ppm/{temp_units}")
+	#print(f"Temperature Coefficient: {m} ppm/{temp_units}")
 
 	bestfit_x = np.linspace(temp.min(), temp.max(), 100)
 	bestfit_y = m * bestfit_x + b
@@ -60,6 +60,8 @@ def show_plots(data, temp_units="F"):
 	ax3.plot(bestfit_x, bestfit_y, color="red")
 	
 	ax3.legend()
+
+	ax3.set_title(f"Temperature Coefficient: {m} ppm/{temp_units}")
 
 	fig.tight_layout()
 	
