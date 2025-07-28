@@ -6,7 +6,7 @@ from io import StringIO
 import common.power_supply as ps
 import common.test_bench as tb
 
-address = "http://localhost:8080"
+address = "http://lcls-dev3:8080"
 
 run_path = "/run"
 
