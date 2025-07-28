@@ -3,6 +3,7 @@ import json
 import urllib.parse
 from datetime import datetime
 import os
+import tarfile
 
 import server.test_runner
 from common.test import *
@@ -120,25 +121,28 @@ class RequestHandler(BaseHTTPRequestHandler):
 			tests_list = []
 			folders = []
 			path = server.test_runner.saved_data_dir
-			for item in os.listdir(path):
-				item_path = os.path.join(path, item)
-				if os.path.isdir(item_path):
-					folders.append(item)
-			for f in folders:
-				if len(f) < len(server.test_runner.date_f_string) + 1:
-					return
-				split_idx = (len(f) - len(server.test_runner.date_f_string)) - 2
-				tbid = f[:split_idx]
-				time = f[split_idx:]
-				time_ms = int(datetime.strptime(time, server.test_runner.date_f_string).timestamp())
-				if tbid not in list(map(lambda e: e.tbid, test_bench.benches)):
-					continue
-				tests_list.append({"bench": tbid, "time": time_ms, "status": "completed"})
+			test_log = server.test_runner.TestLog.load_from_file()
+			for k, v in test_log.entries.items():
+				tests_list.append({"bench": v.bench_id, "time": int(v.time / 1000), "status": v.status, "pass_fail": v.pass_fail, "uuid": str(k)})
+			#for item in os.listdir(path):
+			#	item_path = os.path.join(path, item)
+			#	if os.path.isdir(item_path):
+			#		folders.append(item)
+			#for f in folders:
+			#	if len(f) < len(server.test_runner.date_f_string) + 1:
+			#		return
+			#	split_idx = (len(f) - len(server.test_runner.date_f_string)) - 2
+			#	tbid = f[:split_idx]
+			#	time = f[split_idx:]
+			#	time_ms = int(datetime.strptime(time, server.test_runner.date_f_string).timestamp())
+			#	if tbid not in list(map(lambda e: e.tbid, test_bench.benches)):
+			#		continue
+			#	tests_list.append({"bench": tbid, "time": time_ms, "status": "completed"})
 			print(tests_list)
 			for t in server.test_runner.test_queue:
-				tests_list.append({"bench": t.test_info.bench.tbid, "time": int(t.time_requested / 1000), "status": "queued"})
+				tests_list.append({"bench": t.test_info.bench.tbid, "time": int(t.time_requested / 1000), "status": "queued", "pass_fail": "incomplete", "uuid": str(t.uuid)})
 			for t in server.test_runner.running_tests:
-				tests_list.append({"bench": t.test_info.bench.tbid, "time": int(t.start_time / 1000), "status": "running"})
+				tests_list.append({"bench": t.test_info.bench.tbid, "time": int(t.start_time / 1000), "status": "running", "pass_fail": "incomplete", "uuid": str(t.uuid)})
 			total = len(tests_list)
 			tests_list.sort(reverse=True, key=lambda e: e["time"])
 			tests_list = tests_list[:number]

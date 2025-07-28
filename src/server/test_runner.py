@@ -1,5 +1,7 @@
 import time
+import uuid
 from datetime import datetime
+import tarfile
 
 from common.test_bench import *
 from common.power_supply import *
@@ -8,12 +10,72 @@ request_close = False
 
 saved_data_dir = Path(__file__).resolve().parent.parent / "data" / "reports"
 
+# Maybe make it per month to stop the file from becoming too big?
+test_log_path = daved_data_dir / "test_log.json"
+
 date_f_string = "-%m-%d-%Y--%H-%M-%S"
+
+def get_csv_name(channel, number, serial, psid):
+	return f"ch{channel + 1}-test{number + 1}-{psid}-{serial}.csv"
+
+class SupplyTestLogEntry:
+
+	def __init__(self, channel: int, number: int, serial_number: str, status: str, supply_id: str):
+		self.channel = channel
+		self.number = number
+		self.serial_number = serial_number
+		self.status = status
+		self.supply_id = supply_id
+
+	def to_dict(self):
+		return {"channel": self.channel, "number": self.number, "serial_number": self.serial_number, "status": self.status,  "supply_id": self.supply_id}
+
+	def from_dict(d):
+		return SupplyTestLogEntry(d["channel"], d["number"], d["serial_number"], d["status"], d["supply_id"])
+
+class TestLogEntry:
+	
+	def __init__(self, supply_tests: list[SupplyTestLogEntry], bench_id: str, time: int, status: str, pass_fail: str):
+		self.supply_tests = supply_tests
+		self.bench_id = bench_id
+		self.time = time
+		self.status = status
+		self.pass_fail = pass_fail
+
+	def to_dict(self):
+		return {"supply_tests": [st.to_dict() for st in self.supply_tests], "bench_id": self.bench_id, "time": self.time, "status": self.status,  "pass_fail": self.pass_fail}
+
+	def from_dict(d):
+		return TestLogEntry([SupplyTestLogEntry.from_dict(st) for st in d["supply_tests"]], d["bench_id"], d["time"], d["status"], d["pass_fail"])
+
+class TestLog:
+
+	def __init__(self, entries):
+		self.entries = entries
+
+	def to_dict(self):
+		return {k, v.to_dict() for k, v in self.entries.items()}
+
+	def from_dict(d):
+		return TestLog({k, TestLogEntry.from_dict(v) for k, v in d})
+		
+	def load_from_file():
+		with open(test_log_path, "r") as f:
+			return TestLog.from_dict(json.loads(f.read()))
+
+	def write_out(self):
+		with open(test_log_path "w") as f:
+			f.write(json.dumps(self.to_dict()))
+
+	def insert(self, uuid, entry):
+		self.entries[uuid] = entry
+		self.write_out()
 
 class TestRequestState:
 	
 	def __init__(self, test_info):
 		self.test_info = test_info
+		self.uuid = uuid.uuid4()
 		self.start_time = None
 		self.time_requested = time.time() * 1000
 
@@ -74,22 +136,40 @@ def test_loop():
 					if finished:
 						print("finished")
 						curr_test.finish(pvs)
-						batch_name = test.test_info.bench.tbid + datetime.fromtimestamp(test.start_time / 1000).strftime(date_f_string)
-						directory = saved_data_dir / batch_name
-						directory.mkdir(parents=True, exist_ok=True)
 						
-						filename = "ch" + str(supply_test.channel + 1) + "-test" + str(supply_test.test_number + 1) + "-" + supply_test.serial_num + "--" +  supply_test.supply_type.psid + ".csv"
-						loc = directory / filename
-						curr_test.add_calculated_data(supply_test.supply_type)
-						curr_test.saved_data.to_csv(loc, index=False)
+						tarfile_name = saved_data_dir / (str(test.uuid) + ".tar.gz")
+						with tarfile.open(name=tarfile_name, mode="w:gz") as tf:
+							csv_data = io.BytesIO()
+							# This might be a problem for super large data frames
+							curr_test.saved_data.to_csv(csv_data, index=False)
+							csv_info = tarfile.TarInfo(name=get_csv_name(supply_test.channel, supply_test.test_number, supply_test.serial_num, supply_test.supply_type.psid)
+							csv_info.size = len(csv_data)
+							tf.addfile(csv_info, csv_data)
+
+						#batch_name = test.test_info.bench.tbid + datetime.fromtimestamp(test.start_time / 1000).strftime(date_f_string)
+						#directory = saved_data_dir / batch_name
+						#directory.mkdir(parents=True, exist_ok=True)
+						#
+						#filename = "ch" + str(supply_test.channel + 1) + "-test" + str(supply_test.test_number + 1) + "-" + supply_test.serial_num + "--" +  supply_test.supply_type.psid + ".csv"
+						#loc = directory / filename
+						#curr_test.add_calculated_data(supply_test.supply_type)
+						#curr_test.saved_data.to_csv(loc, index=False)
 				
 						
 						supply_test.is_started = False
 						supply_test.test_number += 1
-						if supply_test.test_number >= len(supply_test.tests):
+						if supply_test.test_number >= len(supply_test.tests):							
 							supply_test.is_finished = True
 			if not not_finished:
 				finished = running_tests.pop(idx)
+				# store metadata
+				test_log = TestLog.load_from_file()
+				supply_tests_log_entries = []
+				for sts in test.test_info.supply_test_info:
+					for i in range(len(sts)):
+						st = sts[i]
+						supply_tests_log_entries.append(SupplyTestLogEntry(sts.channel, i, sts.serial_num, "completed", sts.supply_type.psid))
+				test_log.insert(test.uuid, TestLogEntry(supply_tests_log_entries, bench.tbid, test.start_time, "completed", "pass"))
 				break
 		time.sleep(0.5)
 		if request_close:
