@@ -44,6 +44,7 @@ class SupplyTestInfo:
 		self.test_number = 0
 		self.is_finished = False
 		self.is_started = False
+		self.pass_fail = None
 	
 	def from_dict(d):
 		tests = list(map(lambda di: Test.from_dict(di), d["tests"]))
@@ -152,19 +153,20 @@ class RequestHandler(BaseHTTPRequestHandler):
 			response_message["page_size"] = number
 		elif parsed_path.path.startswith("/reports") and not parsed_path.path.endswith(".csv"):
 			split = parsed_path.path.split('/')
-			if len(split) == 4:
-				bench = split[2]
-				time = int(split[3])
-				name = bench + datetime.fromtimestamp(time).strftime(server.test_runner.date_f_string)
-				path = server.test_runner.saved_data_dir / name
+			if len(split) == 3:
+				uuid = split[2]
+				#bench = split[2]
+				#time = int(split[3])
+				#name = bench + datetime.fromtimestamp(time).strftime(server.test_runner.date_f_string)
+				path = server.test_runner.saved_data_dir / (uuid + ".csv")
 				queued_test = None
 				running_test = None
 				for t in server.test_runner.test_queue:
-					if t.test_info.bench.tbid == bench and int(t.time_requested / 1000) == time:
+					if t.uuid == uuid:
 						queued_test = t
 						break
 				for t in server.test_runner.running_tests:
-					if t.test_info.bench.tbid == bench and int(t.start_time / 1000) == time:
+					if t.uuid == uuid:
 						running_test = t
 						break
 				tests = []
@@ -172,47 +174,79 @@ class RequestHandler(BaseHTTPRequestHandler):
 					for st in queued_test.test_info.supply_test_info:
 						for i in range(len(st.tests)):
 							t = st.tests[i]
-							tests.append({"channel": st.channel + 1, "test_num": i + 1, "supply_type": st.supply_type.psid, "serial_num": st.serial_num, "status": "queued"})
+							tests.append({"channel": st.channel + 1, "test_num": i + 1, "supply_type": st.supply_type.psid, "serial_num": st.serial_num, "status": "queued", "pass_fail": "incomplete"})
 				elif running_test is not None:
 					for st in running_test.test_info.supply_test_info:
 						for i in range(len(st.tests)):
 							t = st.tests[i]
 							status = "queued" if i > st.test_number else ("running" if i == st.test_number else "completed")
-							tests.append({"channel": st.channel + 1, "test_num": i + 1, "supply_type": st.supply_type.psid, "serial_num": st.serial_num, "status": status})
-				elif os.path.exists(path):
-					files = []
-					for item in os.listdir(path):
-						item_path = os.path.join(path, item)
-						if os.path.isfile(item_path):
-							files.append(item)
-					for f in files:
-						if f.endswith(".csv"):
-							split1 = f.removesuffix(".csv").rsplit("--", 1)
-							psid = split1[1]
-							print(split1)
-							split2 = split1[0].split("-", 2)
-							channel = int(split2[0].removeprefix("ch"))
-							test_num = int(split2[1].removeprefix("test"))
-							serial_num = split2[2]
-							tests.append({"channel": channel, "test_num": test_num, "supply_type": psid, "serial_num": serial_num, "status": "completed"})
-					tests.sort(key=lambda e: e["test_num"])
-					tests.sort(key=lambda e: e["channel"])
+							pass_fail = st.pass_fail if st.pass_fail is not None else "incomplete"
+							tests.append({"channel": st.channel + 1, "test_num": i + 1, "supply_type": st.supply_type.psid, "serial_num": st.serial_num, "status": status, "pass_fail": pass_fail})
+				else:
+					#files = []
+					#for item in os.listdir(path):
+					#	item_path = os.path.join(path, item)
+					#	if os.path.isfile(item_path):
+					#		files.append(item)
+					#for f in files:
+					#	if f.endswith(".csv"):
+					#		split1 = f.removesuffix(".csv").rsplit("--", 1)
+					#		psid = split1[1]
+					#		print(split1)
+					#		split2 = split1[0].split("-", 2)
+					#		channel = int(split2[0].removeprefix("ch"))
+					#		test_num = int(split2[1].removeprefix("test"))
+					#		serial_num = split2[2]
+					#		tests.append({"channel": channel, "test_num": test_num, "supply_type": psid, "serial_num": serial_num, "status": "completed"})
+					test_log = server.test_runner.TestLog.load_from_file()
+					entry = test_log.entries.get(uuid)
+					if entry is not None:
+						for e in entry.supply_tests:
+							tests.append({"channel": e.channel, "test_num": e.number, "supply_type": e.supply_id, "serial_num": e.serial_number, "status": e.status, "pass_fail": e.pass_fail})
+				tests.sort(key=lambda e: e["test_num"])
+				tests.sort(key=lambda e: e["channel"])
 				status = 200
 				response_message["tests"] = tests
 				response_message["total"] = len(tests)
 		elif parsed_path.path.startswith("/reports") and parsed_path.path.endswith(".csv"):
+			print("get csv")
 			split = parsed_path.path.split("/")
-			if len(split) == 5:
-				bench = split[2]
-				time = int(split[3])
-				csv_file = split[4]
-				name = bench + datetime.fromtimestamp(time).strftime(server.test_runner.date_f_string)
-				path = server.test_runner.saved_data_dir / name / csv_file
+			if len(split) == 4:
+				uuid = split[2]
+				name = split[3]
+				path = server.test_runner.saved_data_dir / (uuid + ".tar.gz")
+				folderpath = server.test_runner.saved_data_dir / uuid / name
 				if path.exists():
-					status = 200
-					content_type = "text/csv"
-					with open(path, "r") as csvfile:
-						response_data = csvfile.read()
+					with tarfile.open(path, "r") as tf:
+						if name in tf.getnames():
+							with tf.extractfile(tf.getmember(name)) as csv:
+								status = 200
+								content_type = "text/csv"
+								response_data = csv.read().decode('utf-8')
+								print("csv: " + response_data)
+						else:
+							print(f"name {name} not in files {tf.getnames()}")
+				elif folderpath.exists():
+					# this allows directory traversal. TODO Fix later!
+					with open(folderpath, "r") as f:
+						status = 200
+						content_type = "text/csv"
+						response_data = f.read()
+				else:
+					print("path {path} does not exist")
+				#bench = split[2]
+				#time = int(split[3])
+				#csv_file = split[4]
+				#name = bench + datetime.fromtimestamp(time).strftime(server.test_runner.date_f_string)
+				#path = server.test_runner.saved_data_dir / name / csv_file
+				#if path.exists():
+				#	status = 200
+				#	content_type = "text/csv"
+				#	with open(path, "r") as csvfile:
+				#		response_data = csvfile.read()
+			else:
+				print("invalid path")
+		print(parsed_path.path)
 		self.send_response(status)
 		self.send_header('Content-Type', content_type)
 		self.end_headers()

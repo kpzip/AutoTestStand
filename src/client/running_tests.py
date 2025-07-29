@@ -36,7 +36,7 @@ def refresh_tests_list(alert=False, force_rerender=False):
 				Label(running_tests_list_frame, text=text).grid(row=i+2, column=3)
 				Label(running_tests_list_frame, text="-").grid(row=i+2, column=4)
 				is_finished = test.status == "completed"
-				Button(running_tests_list_frame, width=10, text="Details", command=lambda bench_id=test.bench.tbid, t=test.time, isf=is_finished: running_supply_tests.running_supply_tests_window(running_tests_toplevel, bench_id, t, isf)).grid(row=i+2, column=5)
+				Button(running_tests_list_frame, width=10, text="Details", command=lambda uuid=test.uuid, isf=is_finished: running_supply_tests.running_supply_tests_window(running_tests_toplevel, uuid, isf)).grid(row=i+2, column=5)
 	except Exception as e:
 		if alert:
 			messagebox.showerror(title="Error", message=f"Unable to load running tests: {str(e)}", parent=running_tests_toplevel)

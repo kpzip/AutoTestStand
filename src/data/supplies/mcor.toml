@@ -3,8 +3,18 @@ name = "Spare"
 max_current = 0
 min_current = 0
 ename = 0
-diagnostic_tests = []
 
+[[spare.diagnostic_tests]]
+type = "constant_current"
+name = "Positive max. current test"
+current = 10
+duration = 0.01
+
+[[spare.diagnostic_tests]]
+type = "constant_current"
+name = "Mid current test"
+current = 5
+duration = 0.01
 
 [mcor1]
 name = "MCOR 1A"

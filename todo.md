@@ -1,6 +1,6 @@
 # TODO
 
-[ ] UUIDS / Redo http get api
+[x] UUIDS / Redo http get api
 [ ] Merge Main screen and status page
 [ ] Make test timer not start until ramp period has ended
 [ ] Make faults abort the test
