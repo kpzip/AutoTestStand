@@ -1,6 +1,6 @@
 [spare]
 name = "Spare"
-max_current = 0
+max_current = 10
 min_current = 0
 ename = 0
 

@@ -223,7 +223,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 								status = 200
 								content_type = "text/csv"
 								response_data = csv.read().decode('utf-8')
-								print("csv: " + response_data)
+								#print("csv: " + response_data)
 						else:
 							print(f"name {name} not in files {tf.getnames()}")
 				elif folderpath.exists():
