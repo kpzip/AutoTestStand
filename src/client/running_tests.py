@@ -32,9 +32,17 @@ def refresh_tests_list(alert=False, force_rerender=False):
 				test = lst.tests[i]
 				Label(running_tests_list_frame, text=test.bench.name).grid(row=i+2, column=1)
 				Label(running_tests_list_frame, text=datetime.fromtimestamp(test.time).strftime("%m/%d/%Y %H:%M:%S")).grid(row=i+2, column=2)
-				text = "Finished" if test.status == "completed" else ("Running" if test.status == "running" else "Queued")
+				text = "Finished" if test.status == "completed" else ("Running" if test.status == "running" else ("Aborted" if test.status == "aborted" else "Queued"))
 				Label(running_tests_list_frame, text=text).grid(row=i+2, column=3)
-				Label(running_tests_list_frame, text="-").grid(row=i+2, column=4)
+				pass_fail = "-"
+				pass_fail_color = "black"
+				if test.pass_fail == "pass":
+					pass_fail = "PASS"
+					pass_fail_color = "green"
+				elif test.pass_fail == "fail":
+					pass_fail = "FAIL"
+					pass_fail_color = "red"
+				Label(running_tests_list_frame, text=pass_fail, fg=pass_fail_color).grid(row=i+2, column=4)
 				is_finished = test.status == "completed"
 				Button(running_tests_list_frame, width=10, text="Details", command=lambda uuid=test.uuid, isf=is_finished: running_supply_tests.running_supply_tests_window(running_tests_toplevel, uuid, isf)).grid(row=i+2, column=5)
 	except Exception as e:

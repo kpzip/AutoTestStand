@@ -54,10 +54,18 @@ def refresh_tests_list(alert=False, force_rerender=False):
 				Label(running_supply_tests_list_frame, text=str(test.test_number)).grid(row=i+2, column=2)
 				Label(running_supply_tests_list_frame, text=test.serial_num).grid(row=i+2, column=3)
 				Label(running_supply_tests_list_frame, text=test.supply_type.name).grid(row=i+2, column=4)
-				text = "Finished" if test.status == "completed" else ("Running" if test.status == "running" else "Queued")
+				text = "Finished" if test.status == "completed" else ("Running" if test.status == "running" else ("Aborted" if test.status == "aborted" else "Queued"))
 				Label(running_supply_tests_list_frame, text=text).grid(row=i+2, column=5)
 				state = NORMAL if test.status == "completed" else DISABLED
-				Label(running_supply_tests_list_frame, text="-").grid(row=i+2, column=6, padx=25)
+				pass_fail = "-"
+				pass_fail_color = "black"
+				if test.pass_fail == "pass":
+					pass_fail = "PASS"
+					pass_fail_color = "green"
+				elif test.pass_fail == "fail":
+					pass_fail = "FAIL"
+					pass_fail_color = "red"
+				Label(running_supply_tests_list_frame, text=pass_fail, fg=pass_fail_color).grid(row=i+2, column=6, padx=25)
 				Button(running_supply_tests_list_frame, state=state, width=15, text="Download CSV", command=lambda c=test.channel, n=test.test_number: save_csv(c, n)).grid(row=i+2, column=7)
 				Button(running_supply_tests_list_frame, state=state, width=15, text="View Data", command=lambda c=test.channel, n=test.test_number: plot_csv(c, n)).grid(row=i+2, column=8)
 	except Exception as e:

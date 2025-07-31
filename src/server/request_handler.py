@@ -48,6 +48,9 @@ class SupplyTestInfo:
 	
 	def from_dict(d):
 		tests = list(map(lambda di: Test.from_dict(di), d["tests"]))
+		for t in tests:
+			t.pass_fail = "incomplete"
+			t.aborted = False
 		return SupplyTestInfo(d["channel"], d["serial_num"], d["supply_type"], tests)
 
 
@@ -179,7 +182,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 					for st in running_test.test_info.supply_test_info:
 						for i in range(len(st.tests)):
 							t = st.tests[i]
-							status = "queued" if i > st.test_number else ("running" if i == st.test_number else "completed")
+							status = "queued" if i > st.test_number else ("running" if i == st.test_number else ("aborted" if t.aborted else "completed"))
 							pass_fail = st.pass_fail if st.pass_fail is not None else "incomplete"
 							tests.append({"channel": st.channel + 1, "test_num": i + 1, "supply_type": st.supply_type.psid, "serial_num": st.serial_num, "status": status, "pass_fail": pass_fail})
 				else:

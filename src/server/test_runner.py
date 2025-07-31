@@ -89,6 +89,7 @@ class TestRequestState:
 		self.uuid = str(uuid.uuid4())
 		self.start_time = None
 		self.time_requested = time.time() * 1000
+		self.aborted = False
 
 	def start(self):
 		self.start_time = time.time() * 1000
@@ -139,13 +140,22 @@ def test_loop():
 					finished = False
 					if not supply_test.is_started:
 						supply_test.time_since_last_started = time.time() * 1000
-						curr_test.begin(pvs, supply_test.supply_type)
+						start = curr_test.begin(pvs, supply_test.supply_type)
+						if not start:
+							curr_test.aborted = True
+							finished = True
 						supply_test.is_started = True
 					else:
-						finished = curr_test.tick(pvs, time.time() * 1000 - supply_test.time_since_last_started, time.time() * 1000 - test.start_time)
+						if supply_test.time_since_last_started is None and curr_test.should_start_timer(pvs):
+							supply_test.time_since_last_started = time.time() * 1000
+						elapsed = None if supply_test.time_since_last_started is None else time.time() * 1000 - supply_test.time_since_last_started
+						finished = curr_test.tick(pvs, elapsed, time.time() * 1000 - test.start_time)
 						curr_test.record_data(pvs, time.time() * 1000 - supply_test.time_since_last_started)
+						if curr_test.should_abort():
+							curr_test.aborted = True
+							finished = True
 					if finished:
-						print("finished test {supply_test.test_number + 1} of {len(supply_test.tests)}")
+						print(f"finished test {supply_test.test_number + 1} of {len(supply_test.tests)}")
 						curr_test.finish(pvs)
 						#curr_test.add_calculated_data(supply_test.supply_type)
 						#tarfile_name = saved_data_dir / (str(test.uuid) + ".tar.gz")
@@ -169,6 +179,9 @@ def test_loop():
 						
 						supply_test.is_started = False
 						supply_test.test_number += 1
+						passed = curr_test.saved_data["PPMERR"].max() <= 100e-6 and not curr_test.aborted
+						curr_test.pass_fail = "pass" if passed else "fail"
+						
 						if supply_test.test_number >= len(supply_test.tests):							
 							supply_test.is_finished = True
 			if not not_finished:
@@ -178,8 +191,8 @@ def test_loop():
 				supply_tests_log_entries = []
 				for sts in test.test_info.supply_test_info:
 					for j in range(len(sts.tests)):
-						supply_tests_log_entries.append(SupplyTestLogEntry(sts.channel + 1, j + 1, sts.serial_num, "completed", sts.supply_type.psid, "pass"))
-				test_log.insert(test.uuid, TestLogEntry(supply_tests_log_entries, bench.tbid, test.start_time, "completed", "pass" if all([le.pass_fail == "pass" for le in supply_tests_log_entries]) else "fail"))
+						supply_tests_log_entries.append(SupplyTestLogEntry(sts.channel + 1, j + 1, sts.serial_num, "aborted" if sts.tests[j].aborted else "completed", sts.supply_type.psid, sts.tests[j].pass_fail))
+				test_log.insert(test.uuid, TestLogEntry(supply_tests_log_entries, bench.tbid, test.start_time, "aborted" if test.aborted else "completed", "pass" if all([le.pass_fail == "pass" for le in supply_tests_log_entries]) else "fail"))
 				saved_data_dir.mkdir(parents=True, exist_ok=True)
 				tarfile_name = saved_data_dir / (test.uuid + ".tar.gz")
 				uncompressed_dir = saved_data_dir / test.uuid

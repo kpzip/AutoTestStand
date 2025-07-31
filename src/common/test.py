@@ -16,7 +16,7 @@ class Test(ABC):
 	def add_calculated_data(self, supply):
 		cond = np.logical_not(self.saved_data["RAMPSTATE"])
 		iavg = self.saved_data.loc[cond, "IACT"].mean()
-		self.saved_data.loc[cond, "IAVG"] = iavg
+		self.saved_data.loc[cond, "IAVG"] = [iavg for i in range(len(self.saved_data))]
 		self.saved_data.loc[cond, "PPMERR"] = np.absolute((self.saved_data["IACT"] - self.saved_data["IAVG"]) / (supply.max_current if iavg > 0 else supply.min_current))
 	
 	def begin(self, pvs, supply_type):
@@ -30,12 +30,13 @@ class Test(ABC):
 						break
 					elif counter > 10:
 						print("failed to turn on power supply")
-						break
+						return False
 					else:
 						counter += 1
 						time.sleep(0.1)
 		if (type_pv := pvs.get("TYPE")) is not None and supply_type.ename is not None:
 			type_pv.put(supply_type.ename)
+		return True
 
 	def finish(self, pvs):
 		pass
@@ -43,6 +44,12 @@ class Test(ABC):
 	@abstractmethod
 	def tick(self, pvs, ms_since_test_started: int, ms_elapsed_total: int) -> bool:
 		pass
+
+	def should_start_timer(self, pvs):
+		return not bool(pvs["RAMPSTATE"].get())
+
+	def should_abort(self, pvs):
+		return False
 
 	def __str__(self):
 		return self.name
@@ -78,7 +85,7 @@ class ConstantCurrentTest(Test):
 		pvs["ISETPT"].put(0)
 
 	def tick(self, pvs, ms_since_test_started: int, ms_elapsed_total: int) -> bool:
-		return ms_since_test_started >= self.duration
+		return ms_since_test_started is not None and ms_since_test_started >= self.duration
 	
 	def hours(self):
 		return self.duration / (60 * 60 * 1000)
