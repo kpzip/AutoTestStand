@@ -49,7 +49,7 @@ class Test(ABC):
 		return not bool(pvs["RAMPSTATE"].get())
 
 	def should_abort(self, pvs):
-		return False
+		return "FAULT" in pvs and pvs["FAULT"].get() != 0
 
 	def __str__(self):
 		return self.name

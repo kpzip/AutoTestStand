@@ -71,6 +71,8 @@ def running_tests_window(root):
 		refresh_tests_list(alert=True, force_rerender=True)
 
 		def refresh():
+			if not running_tests_toplevel.winfo_exists():
+				return
 			refresh_tests_list()
 			running_tests_toplevel.after(2000, refresh)
 		

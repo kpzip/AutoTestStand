@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import ttk
+import sys
 
 from client.run_tests import *
 import client.running_tests as running_tests
@@ -19,6 +20,7 @@ def main():
 	ttk.Button(mainframe, text="Finished Tests", width=20, command=lambda: running_tests.running_tests_window(root)).grid(column=1, row=2, padx=8, pady=8)
 
 	root.mainloop()
+	sys.exit(0)
 
 
 if __name__ == "__main__":

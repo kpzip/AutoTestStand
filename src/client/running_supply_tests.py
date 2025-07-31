@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from datetime import datetime
 from tkinter import messagebox
+import threading
 
 import client.server_comms as server_comms
 import client.data_plotter as plotter
@@ -32,7 +33,8 @@ def plot_csv(channel: int, test_number: int):
 		plotter.show_plots(data)
 	except Exception as e:
 		print(e)
-		messagebox.showerror(title="Error", message=f"There was an error showing the graphs: {str(e)}", parent=running_supply_tests_toplevel)
+		thread = threading.Thread(target=lambda: messagebox.showerror(title="Error", message=f"There was an error showing the graphs: {str(e)}", parent=running_supply_tests_toplevel))
+		thread.start()
 	
 
 def refresh_tests_list(alert=False, force_rerender=False):
@@ -56,7 +58,7 @@ def refresh_tests_list(alert=False, force_rerender=False):
 				Label(running_supply_tests_list_frame, text=test.supply_type.name).grid(row=i+2, column=4)
 				text = "Finished" if test.status == "completed" else ("Running" if test.status == "running" else ("Aborted" if test.status == "aborted" else "Queued"))
 				Label(running_supply_tests_list_frame, text=text).grid(row=i+2, column=5)
-				state = NORMAL if test.status == "completed" else DISABLED
+				state = NORMAL if test.status == "completed" or test.status == "aborted" else DISABLED
 				pass_fail = "-"
 				pass_fail_color = "black"
 				if test.pass_fail == "pass":
@@ -70,7 +72,8 @@ def refresh_tests_list(alert=False, force_rerender=False):
 				Button(running_supply_tests_list_frame, state=state, width=15, text="View Data", command=lambda c=test.channel, n=test.test_number: plot_csv(c, n)).grid(row=i+2, column=8)
 	except Exception as e:
 		if alert:
-			messagebox.showerror(title="Error", message=f"Error loading test info: {str(e)}", parent=running_supply_tests_toplevel)
+			thread = threading.Thread(target=lambda: messagebox.showerror(title="Error", message=f"Error loading test info: {str(e)}", parent=running_supply_tests_toplevel))
+			thread.start()
 
 def running_supply_tests_window(root, uuid, is_finished: bool):
 	global running_supply_tests_toplevel, running_supply_tests_list_frame, batch_uuid, has_results
@@ -98,6 +101,8 @@ def running_supply_tests_window(root, uuid, is_finished: bool):
 		refresh_tests_list(alert=True, force_rerender=True)
 
 		def refresh():
+			if not running_supply_tests_toplevel.winfo_exists():
+				return
 			refresh_tests_list()
 			running_supply_tests_toplevel.after(2000, refresh)
 		

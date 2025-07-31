@@ -11,6 +11,7 @@ name = "MCOR:IN20:1{channel:02d}:NAME"
 state = "LGPS:IN20:1:STATE"
 statesetpt = "LGPS:IN20:1:STATESETPT"
 type = "MCOR:IN20:1{channel:02d}:TYPE"
+fault = "MCOR:IN20:1{channel:02d}:FAULTSTATE"
 
 [gunb_emcor_01]
 name = "GUNB EMCOR 1"
@@ -25,3 +26,4 @@ name = "MCOR:GUNB:1{channel:02d}:NAME"
 state = "LGPS:GUNB:1:STATE"
 statesetpt = "LGPS:GUNB:1:STATESETPT"
 type = "MCOR:GUNB:1{channel:02d}:TYPE"
+fault = "MCOR:GUNB:1{channel:02d}:FAULTSTATE"
