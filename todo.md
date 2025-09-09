@@ -16,3 +16,6 @@
 [ ] Test Timer
 [ ] Stop Test Button + abort reason
 [ ] Password Authentication
+[ ] Better Error Handling / Diagnostics on server side
+[ ] Supply ppm ratings for determining pass/fail
+[ ] flag for inverted fault PV

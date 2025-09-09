@@ -116,7 +116,6 @@ class RequestHandler(BaseHTTPRequestHandler):
 		content_type = "application/json"
 
 		if parsed_path.path == "/reports":
-			print("reports query")
 			number = query_params.get("display")
 			if number is None:
 				number = 1000
@@ -128,21 +127,6 @@ class RequestHandler(BaseHTTPRequestHandler):
 			test_log = server.test_runner.TestLog.load_from_file()
 			for k, v in test_log.entries.items():
 				tests_list.append({"bench": v.bench_id, "time": int(v.time / 1000), "status": v.status, "pass_fail": v.pass_fail, "uuid": str(k)})
-			#for item in os.listdir(path):
-			#	item_path = os.path.join(path, item)
-			#	if os.path.isdir(item_path):
-			#		folders.append(item)
-			#for f in folders:
-			#	if len(f) < len(server.test_runner.date_f_string) + 1:
-			#		return
-			#	split_idx = (len(f) - len(server.test_runner.date_f_string)) - 2
-			#	tbid = f[:split_idx]
-			#	time = f[split_idx:]
-			#	time_ms = int(datetime.strptime(time, server.test_runner.date_f_string).timestamp())
-			#	if tbid not in list(map(lambda e: e.tbid, test_bench.benches)):
-			#		continue
-			#	tests_list.append({"bench": tbid, "time": time_ms, "status": "completed"})
-			print(tests_list)
 			for t in server.test_runner.test_queue:
 				tests_list.append({"bench": t.test_info.bench.tbid, "time": int(t.time_requested / 1000), "status": "queued", "pass_fail": "incomplete", "uuid": str(t.uuid)})
 			for t in server.test_runner.running_tests:
@@ -158,9 +142,6 @@ class RequestHandler(BaseHTTPRequestHandler):
 			split = parsed_path.path.split('/')
 			if len(split) == 3:
 				uuid = split[2]
-				#bench = split[2]
-				#time = int(split[3])
-				#name = bench + datetime.fromtimestamp(time).strftime(server.test_runner.date_f_string)
 				path = server.test_runner.saved_data_dir / (uuid + ".csv")
 				queued_test = None
 				running_test = None
@@ -183,24 +164,9 @@ class RequestHandler(BaseHTTPRequestHandler):
 						for i in range(len(st.tests)):
 							t = st.tests[i]
 							status = "queued" if i > st.test_number else ("running" if i == st.test_number else ("aborted" if t.aborted else "completed"))
-							pass_fail = st.pass_fail if st.pass_fail is not None else "incomplete"
+							pass_fail = t.pass_fail if t.pass_fail is not None else "incomplete"
 							tests.append({"channel": st.channel + 1, "test_num": i + 1, "supply_type": st.supply_type.psid, "serial_num": st.serial_num, "status": status, "pass_fail": pass_fail})
 				else:
-					#files = []
-					#for item in os.listdir(path):
-					#	item_path = os.path.join(path, item)
-					#	if os.path.isfile(item_path):
-					#		files.append(item)
-					#for f in files:
-					#	if f.endswith(".csv"):
-					#		split1 = f.removesuffix(".csv").rsplit("--", 1)
-					#		psid = split1[1]
-					#		print(split1)
-					#		split2 = split1[0].split("-", 2)
-					#		channel = int(split2[0].removeprefix("ch"))
-					#		test_num = int(split2[1].removeprefix("test"))
-					#		serial_num = split2[2]
-					#		tests.append({"channel": channel, "test_num": test_num, "supply_type": psid, "serial_num": serial_num, "status": "completed"})
 					test_log = server.test_runner.TestLog.load_from_file()
 					entry = test_log.entries.get(uuid)
 					if entry is not None:
@@ -212,7 +178,6 @@ class RequestHandler(BaseHTTPRequestHandler):
 				response_message["tests"] = tests
 				response_message["total"] = len(tests)
 		elif parsed_path.path.startswith("/reports") and parsed_path.path.endswith(".csv"):
-			print("get csv")
 			split = parsed_path.path.split("/")
 			if len(split) == 4:
 				uuid = split[2]
@@ -226,7 +191,6 @@ class RequestHandler(BaseHTTPRequestHandler):
 								status = 200
 								content_type = "text/csv"
 								response_data = csv.read().decode('utf-8')
-								#print("csv: " + response_data)
 						else:
 							print(f"name {name} not in files {tf.getnames()}")
 				elif folderpath.exists():
@@ -237,19 +201,8 @@ class RequestHandler(BaseHTTPRequestHandler):
 						response_data = f.read()
 				else:
 					print("path {path} does not exist")
-				#bench = split[2]
-				#time = int(split[3])
-				#csv_file = split[4]
-				#name = bench + datetime.fromtimestamp(time).strftime(server.test_runner.date_f_string)
-				#path = server.test_runner.saved_data_dir / name / csv_file
-				#if path.exists():
-				#	status = 200
-				#	content_type = "text/csv"
-				#	with open(path, "r") as csvfile:
-				#		response_data = csvfile.read()
 			else:
 				print("invalid path")
-		print(parsed_path.path)
 		self.send_response(status)
 		self.send_header('Content-Type', content_type)
 		self.end_headers()

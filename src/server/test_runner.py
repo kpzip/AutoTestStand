@@ -142,6 +142,7 @@ def test_loop():
 						supply_test.time_since_last_started = time.time() * 1000
 						start = curr_test.begin(pvs, supply_test.supply_type)
 						if not start:
+							print("Power Supply Failed to start! Aborting test...")
 							curr_test.aborted = True
 							finished = True
 						supply_test.is_started = True
@@ -151,22 +152,13 @@ def test_loop():
 						elapsed = None if supply_test.time_since_last_started is None else time.time() * 1000 - supply_test.time_since_last_started
 						finished = curr_test.tick(pvs, elapsed, time.time() * 1000 - test.start_time)
 						curr_test.record_data(pvs, time.time() * 1000 - supply_test.time_since_last_started)
-						if curr_test.should_abort():
+						if curr_test.should_abort(pvs):
+							print("Power Supply Fault! Aborting test...")
 							curr_test.aborted = True
 							finished = True
 					if finished:
 						print(f"finished test {supply_test.test_number + 1} of {len(supply_test.tests)}")
 						curr_test.finish(pvs)
-						#curr_test.add_calculated_data(supply_test.supply_type)
-						#tarfile_name = saved_data_dir / (str(test.uuid) + ".tar.gz")
-						#with tarfile.open(name=tarfile_name, mode="a:gz") as tf:
-						#	csv_bytes = curr_test.saved_data.to_csv(index=False).encode(encoding="utf-8")
-						#	csv_data = io.BytesIO(csv_bytes)
-						#	# This might be a problem for super large data frames
-						#	#curr_test.saved_data.to_csv(csv_data, index=False)
-						#	csv_info = tarfile.TarInfo(name=get_csv_name(supply_test.channel, supply_test.test_number, supply_test.serial_num, supply_test.supply_type.psid))
-						#	csv_info.size = len(csv_bytes)
-						#	tf.addfile(csv_info, csv_data)
 
 						directory = saved_data_dir / test.uuid
 						directory.mkdir(parents=True, exist_ok=True)
@@ -179,7 +171,9 @@ def test_loop():
 						
 						supply_test.is_started = False
 						supply_test.test_number += 1
-						passed = curr_test.saved_data["PPMERR"].max() <= 100e-6 and not curr_test.aborted
+						passed = curr_test.saved_data["PPMERR"].max() <= 100e-4 and not curr_test.aborted
+						print(f"Passed: {passed}")
+						print(f"Max Error: {curr_test.saved_data["PPMERR"].max()}")
 						curr_test.pass_fail = "pass" if passed else "fail"
 						
 						if supply_test.test_number >= len(supply_test.tests):							

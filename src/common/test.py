@@ -16,11 +16,11 @@ class Test(ABC):
 	def add_calculated_data(self, supply):
 		cond = np.logical_not(self.saved_data["RAMPSTATE"])
 		iavg = self.saved_data.loc[cond, "IACT"].mean()
-		self.saved_data.loc[cond, "IAVG"] = [iavg for i in range(len(self.saved_data))]
+		self.saved_data.loc[cond, "IAVG"] = iavg
 		self.saved_data.loc[cond, "PPMERR"] = np.absolute((self.saved_data["IACT"] - self.saved_data["IAVG"]) / (supply.max_current if iavg > 0 else supply.min_current))
 	
 	def begin(self, pvs, supply_type):
-		if state_set_point := pvs.get("STATESETPT"):
+		if (state_set_point := pvs.get("STATESETPT")) is not None:
 			state_set_point.put(1)
 			# Wait for the power supply to turn on
 			if state := pvs.get("STATE"):
@@ -78,8 +78,8 @@ class ConstantCurrentTest(Test):
 			self.duration = duration * 60 * 60 * 1000
 
 	def begin(self, pvs, supply_type):
-		super().begin(pvs, supply_type)
 		pvs["ISETPT"].put(self.current)
+		return super().begin(pvs, supply_type)
 
 	def finish(self, pvs):
 		pvs["ISETPT"].put(0)
