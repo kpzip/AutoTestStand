@@ -98,3 +98,9 @@ class TestBench:
 		return f"Test Bench `{self.name}` with {self.channels} channel(s)"
 
 benches = load_test_benches(try_connect=False)
+
+def bench_from_id(tbid: str):
+	for b in benches:
+		if b.tbid == tbid:
+			return b
+	return None

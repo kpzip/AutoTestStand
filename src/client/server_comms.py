@@ -4,6 +4,7 @@ import pandas as pd
 from io import StringIO
 
 import common.power_supply as ps
+from common.test import *
 import common.test_bench as tb
 
 address = "http://lcls-dev3:8080"
@@ -96,13 +97,14 @@ def get_reports_list():
 
 class SupplyTestReport:
 	
-	def __init__(self, channel: int, test_number: int, supply_type_name: str, serial_num: str, status: str, pass_fail: str):
+	def __init__(self, channel: int, test_number: int, supply_type_name: str, serial_num: str, status: str, pass_fail: str, test):
 		self.channel = channel
 		self.test_number = test_number
 		self.serial_num = serial_num
 		self.supply_type = None
 		self.status = status
 		self.pass_fail = pass_fail
+		self.test = test
 		for s in ps.supply_types:
 			if s.psid == supply_type_name:
 				self.supply_type = s
@@ -111,7 +113,7 @@ class SupplyTestReport:
 			raise ValueError(f"No Supply with id `{supply_type_name}`!")
 
 	def from_dict(d):
-		return SupplyTestReport(d["channel"], d["test_num"], d["supply_type"], d["serial_num"], d["status"], d["pass_fail"])
+		return SupplyTestReport(d["channel"], d["test_num"], d["supply_type"], d["serial_num"], d["status"], d["pass_fail"], Test.from_dict(d["test_info"], use_ms=True))
 
 	def __eq__(self, rhs):
 		if rhs is None:

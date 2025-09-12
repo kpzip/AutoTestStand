@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
-from datetime import datetime
+from datetime import datetime, timedelta
 from tkinter import messagebox
 import threading
 
@@ -15,10 +15,13 @@ running_supply_tests_list_frame = None
 batch_uuid = None
 has_results = None
 
+tbid = None
+test_time = None
+
 prev_lst = None
 
-def save_csv(channel: int, test_number: int):
-	path = filedialog.asksaveasfilename(initialfile=server_comms.get_csv_file_name(channel, test_number), defaultextension=".csv", filetypes=[("Comma Separated Variable", "*.csv")], parent=running_supply_tests_toplevel)
+def save_csv(channel: int, test_number: int, serial_number: str):
+	path = filedialog.asksaveasfilename(initialfile=f"{datetime.fromtimestamp(test_time).strftime("%Y-%m-%d--%H_%M_%S")}_{tbid}_ch{str(channel)}_test{str(test_number)}_{serial_number.replace('/', '-')}", defaultextension=".csv", filetypes=[("Comma Separated Variable", "*.csv")], parent=running_supply_tests_toplevel)
 	if path:
 		try:
 			server_comms.download_csv(batch_uuid, channel, test_number, path=path)
@@ -27,10 +30,10 @@ def save_csv(channel: int, test_number: int):
 		else:
 			messagebox.showinfo(title="Success", message=f".csv file saved successfully.", parent=running_supply_tests_toplevel)
 
-def plot_csv(channel: int, test_number: int):
+def plot_csv(channel: int, test_number: int, serial_number: str):
 	try:
 		data = server_comms.download_csv(batch_uuid, channel, test_number)
-		plotter.show_plots(data)
+		plotter.show_plots(data, test_time, tbid, channel, test_number, serial_number)
 	except Exception as e:
 		print(e)
 		thread = threading.Thread(target=lambda: messagebox.showerror(title="Error", message=f"There was an error showing the graphs: {str(e)}", parent=running_supply_tests_toplevel))
@@ -49,7 +52,11 @@ def refresh_tests_list(alert=False, force_rerender=False):
 			Label(running_supply_tests_list_frame, text="Serial Number").grid(row=1, column=3)
 			Label(running_supply_tests_list_frame, text="Supply Model").grid(row=1, column=4)
 			Label(running_supply_tests_list_frame, text="Status").grid(row=1, column=5)
-			Label(running_supply_tests_list_frame, text="Pass/Fail").grid(row=1, column=6)
+			Label(running_supply_tests_list_frame, text="Name").grid(row=1, column=6)
+			Label(running_supply_tests_list_frame, text="Value").grid(row=1, column=7)
+			Label(running_supply_tests_list_frame, text="Duration").grid(row=1, column=8)
+			Label(running_supply_tests_list_frame, text="Time Left").grid(row=1, column=9)
+			Label(running_supply_tests_list_frame, text="Pass/Fail").grid(row=1, column=10)
 			for i in range(len(lst.tests)):
 				test = lst.tests[i]
 				Label(running_supply_tests_list_frame, text=str(test.channel)).grid(row=i+2, column=1)
@@ -67,24 +74,33 @@ def refresh_tests_list(alert=False, force_rerender=False):
 				elif test.pass_fail == "fail":
 					pass_fail = "FAIL"
 					pass_fail_color = "red"
-				Label(running_supply_tests_list_frame, text=pass_fail, fg=pass_fail_color).grid(row=i+2, column=6, padx=25)
-				Button(running_supply_tests_list_frame, state=state, width=15, text="Download CSV", command=lambda c=test.channel, n=test.test_number: save_csv(c, n)).grid(row=i+2, column=7)
-				Button(running_supply_tests_list_frame, state=state, width=15, text="View Data", command=lambda c=test.channel, n=test.test_number: plot_csv(c, n)).grid(row=i+2, column=8)
+				Label(running_supply_tests_list_frame, text=test.test.name).grid(row=i+2, column=6, padx=25)
+				Label(running_supply_tests_list_frame, text=test.test.value_str()).grid(row=i+2, column=7, padx=25)
+				seconds = int(test.test.total_duration() / 1000)
+				duration = f"{seconds // 3600:02d}:{(seconds % 3600) // 60:02d}:{seconds % 60:02d}"
+				Label(running_supply_tests_list_frame, text=duration).grid(row=i+2, column=8, padx=25)
+				Label(running_supply_tests_list_frame, text="-").grid(row=i+2, column=9, padx=25)
+				Label(running_supply_tests_list_frame, text=pass_fail, fg=pass_fail_color).grid(row=i+2, column=10, padx=25)
+				Button(running_supply_tests_list_frame, state=state, width=15, text="Download CSV", command=lambda s=test.serial_num, c=test.channel, n=test.test_number: save_csv(c, n, s)).grid(row=i+2, column=11)
+				Button(running_supply_tests_list_frame, state=state, width=15, text="View Data", command=lambda s=test.serial_num, c=test.channel, n=test.test_number: plot_csv(c, n, s)).grid(row=i+2, column=12)
 	except Exception as e:
 		if alert:
+			print(e)
 			thread = threading.Thread(target=lambda: messagebox.showerror(title="Error", message=f"Error loading test info: {str(e)}", parent=running_supply_tests_toplevel))
 			thread.start()
 
-def running_supply_tests_window(root, uuid, is_finished: bool):
-	global running_supply_tests_toplevel, running_supply_tests_list_frame, batch_uuid, has_results
-	if running_supply_tests_toplevel is None or not running_supply_tests_toplevel.winfo_exists() or tbid != bench_id or time != test_time or has_results != is_finished:
+def running_supply_tests_window(root, uuid, is_finished: bool, bench_id: str, timestamp: int):
+	global running_supply_tests_toplevel, running_supply_tests_list_frame, batch_uuid, has_results, tbid, test_time
+	if running_supply_tests_toplevel is None or not running_supply_tests_toplevel.winfo_exists() or uuid != batch_uuid:
+		tbid = bench_id
+		test_time = timestamp
 		if running_supply_tests_toplevel is not None:
 			running_supply_tests_toplevel.destroy()
 		batch_uuid = uuid
 		has_results = is_finished
 		running_supply_tests_toplevel = Toplevel(root)
 		running_supply_tests_toplevel.title("Running Tests")
-		running_supply_tests_toplevel.geometry("1000x400")
+		running_supply_tests_toplevel.geometry("1500x600")
 		
 		running_supply_tests_frame = ttk.Frame(running_supply_tests_toplevel)
 		running_supply_tests_frame.pack(expand=True, fill=BOTH)

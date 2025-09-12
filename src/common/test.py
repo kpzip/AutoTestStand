@@ -54,6 +54,15 @@ class Test(ABC):
 	def __str__(self):
 		return self.name
 
+	# in ms
+	@abstractmethod
+	def total_duration(self) -> int:
+		pass
+
+	@abstractmethod
+	def value_str(self) -> str:
+		pass
+
 	@abstractmethod
 	def to_dict(self):
 		return { "name": self.name }
@@ -96,3 +105,9 @@ class ConstantCurrentTest(Test):
 		start["current"] = self.current
 		start["duration"] = self.duration
 		return start
+
+	def total_duration(self) -> int:
+		return self.duration
+	
+	def value_str(self) -> str:
+		return f"{self.current}A"

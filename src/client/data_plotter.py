@@ -1,12 +1,16 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+from common import test_bench
+from datetime import datetime
 
-def show_plots(data, temp_units="C"):
-	#pd.set_option('display.max_rows', None)
-	#print(data.iloc[12000:13000])
+def show_plots(data, test_time: int, tbid: str, channel: int, test_num: int, serial_number: str, temp_units="C"):
 	
 	fig, (ax1, ax2, ax4) = plt.subplots(3)
+	bench = test_bench.bench_from_id(tbid)
+	title = f"{datetime.fromtimestamp(test_time).strftime("%Y-%m-%d %H:%M:%S")} {bench.name}: Channel {channel} Test #{test_num} for power supply \"{serial_number}\""
+	fig.canvas.manager.set_window_title("Test Results")
+	fig.suptitle(title)
 	
 	time = data["TIMEHRS"]
 	iact = data["IACT"]

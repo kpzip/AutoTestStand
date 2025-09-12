@@ -8,6 +8,7 @@ import shutil
 
 from common.test_bench import *
 from common.power_supply import *
+from common.test import Test
 
 request_close = False
 
@@ -23,19 +24,20 @@ def get_csv_name(channel, number, serial, psid):
 
 class SupplyTestLogEntry:
 
-	def __init__(self, channel: int, number: int, serial_number: str, status: str, supply_id: str, pass_fail: str):
+	def __init__(self, channel: int, number: int, serial_number: str, status: str, supply_id: str, pass_fail: str, test):
 		self.channel = channel
 		self.number = number
 		self.serial_number = serial_number
 		self.status = status
 		self.supply_id = supply_id
 		self.pass_fail = pass_fail
+		self.test = test
 
 	def to_dict(self):
-		return {"channel": self.channel, "number": self.number, "serial_number": self.serial_number, "status": self.status,  "supply_id": self.supply_id, "pass_fail": self.pass_fail}
+		return {"channel": self.channel, "number": self.number, "serial_number": self.serial_number, "status": self.status,  "supply_id": self.supply_id, "pass_fail": self.pass_fail, "test": self.test.to_dict()}
 
 	def from_dict(d):
-		return SupplyTestLogEntry(d["channel"], d["number"], d["serial_number"], d["status"], d["supply_id"], d["pass_fail"])
+		return SupplyTestLogEntry(d["channel"], d["number"], d["serial_number"], d["status"], d["supply_id"], d["pass_fail"], Test.from_dict(d["test"], use_ms=True))
 
 class TestLogEntry:
 	
@@ -185,7 +187,7 @@ def test_loop():
 				supply_tests_log_entries = []
 				for sts in test.test_info.supply_test_info:
 					for j in range(len(sts.tests)):
-						supply_tests_log_entries.append(SupplyTestLogEntry(sts.channel + 1, j + 1, sts.serial_num, "aborted" if sts.tests[j].aborted else "completed", sts.supply_type.psid, sts.tests[j].pass_fail))
+						supply_tests_log_entries.append(SupplyTestLogEntry(sts.channel + 1, j + 1, sts.serial_num, "aborted" if sts.tests[j].aborted else "completed", sts.supply_type.psid, sts.tests[j].pass_fail, sts.tests[j]))
 				test_log.insert(test.uuid, TestLogEntry(supply_tests_log_entries, bench.tbid, test.start_time, "aborted" if test.aborted else "completed", "pass" if all([le.pass_fail == "pass" for le in supply_tests_log_entries]) else "fail"))
 				saved_data_dir.mkdir(parents=True, exist_ok=True)
 				tarfile_name = saved_data_dir / (test.uuid + ".tar.gz")

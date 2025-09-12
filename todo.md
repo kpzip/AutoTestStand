@@ -19,3 +19,5 @@
 [ ] Better Error Handling / Diagnostics on server side
 [ ] Supply ppm ratings for determining pass/fail
 [ ] flag for inverted fault PV
+[ ] make figure title have test info
+[ ] make csv file have test info when saved

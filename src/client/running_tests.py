@@ -44,7 +44,7 @@ def refresh_tests_list(alert=False, force_rerender=False):
 					pass_fail_color = "red"
 				Label(running_tests_list_frame, text=pass_fail, fg=pass_fail_color).grid(row=i+2, column=4)
 				is_finished = test.status == "completed"
-				Button(running_tests_list_frame, width=10, text="Details", command=lambda uuid=test.uuid, isf=is_finished: running_supply_tests.running_supply_tests_window(running_tests_toplevel, uuid, isf)).grid(row=i+2, column=5)
+				Button(running_tests_list_frame, width=10, text="Details", command=lambda tbid=test.bench.tbid, time=test.time, uuid=test.uuid, isf=is_finished: running_supply_tests.running_supply_tests_window(running_tests_toplevel, uuid, isf, tbid, time)).grid(row=i+2, column=5)
 	except Exception as e:
 		if alert:
 			messagebox.showerror(title="Error", message=f"Unable to load running tests: {str(e)}", parent=running_tests_toplevel)
