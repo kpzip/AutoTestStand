@@ -10,6 +10,7 @@ def from_dict(n: str, d: dict):
 	ename = d.get("ename")
 	max_current = d.get("max_current")
 	min_current = d.get("min_current")
+	max_ppm_err = d.get("max_ppm_err")
 	default_tests = d.get("diagnostic_tests")
 	# Basic input validation
 	if name is None:
@@ -31,7 +32,7 @@ def from_dict(n: str, d: dict):
 		raise TypeError(f"[Error] Diagnostic tests for power supply type `{n}` must be a valid list. Power supply type will not be available.")	
 	if not isinstance(ename, int) and ename is not None:	
 		raise TypeError(f"[Error] Epics name for power supply type `{n}` must be a valid integer. Power supply type will not be available.")	
-	return PowerSupplyType(max_current, min_current, name, n, list(map(lambda t: test.Test.from_dict(t, use_ms=False), default_tests)), ename)
+	return PowerSupplyType(max_current, min_current, name, n, list(map(lambda t: test.Test.from_dict(t, use_ms=False), default_tests)), ename, max_ppm_err)
 
 def load_power_supply_types():
 	types_list: list = []
@@ -59,12 +60,13 @@ def load_power_supply_types():
 
 class PowerSupplyType:
 
-	def __init__(self, max_current, min_current, name, psid, default_tests, ename):
+	def __init__(self, max_current, min_current, name, psid, default_tests, ename, max_ppm_err):
 		self.name = name
 		self.max_current = max_current
 		self.min_current = min_current
 		self.psid = psid
 		self.ename = ename
+		self.max_ppm_err = max_ppm_err
 		self.default_tests = default_tests
 
 	def __str__(self):

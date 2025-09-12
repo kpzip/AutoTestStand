@@ -189,7 +189,8 @@ def test_loop():
 						
 						supply_test.is_started = False
 						supply_test.test_number += 1
-						passed = curr_test.saved_data["PPMERR"].max() <= 100e-4 and not curr_test.aborted
+						max_err = supply_test.supply_type.max_ppm_err
+						passed = curr_test.saved_data["PPMERR"].max() <= max_err * 1e-6 and not curr_test.aborted
 						print(f"Passed: {passed}")
 						print(f"Max Error: {curr_test.saved_data["PPMERR"].max()}")
 						curr_test.pass_fail = "pass" if passed else "fail"

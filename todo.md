@@ -16,9 +16,9 @@
 [ ] Test ETA
 [x] Stop Test Button + abort reason
 [ ] Better Error Handling / Diagnostics on server side
-[ ] Supply ppm ratings for determining pass/fail
+[x] Supply ppm ratings for determining pass/fail
 [ ] flag for inverted fault PV
 [ ] fix temperature autoscaling
-[ ] fix overlapping legengs in plots
+[x] fix overlapping legengs in plots
 [x] make figure title have test info
 [x] make csv file have test info when saved

@@ -3,6 +3,7 @@ name = "Spare"
 max_current = 10
 min_current = 0
 ename = 0
+max_ppm_err = 1000
 
 [[spare.diagnostic_tests]]
 type = "constant_current"
@@ -21,6 +22,7 @@ name = "MCOR 1A"
 max_current = 1
 min_current = -1
 ename = 1
+max_ppm_err = 1000
 
 [[mcor1.diagnostic_tests]]
 type = "constant_current"
@@ -39,6 +41,7 @@ name = "MCOR 2A"
 max_current = 2
 min_current = -2
 ename = 2
+max_ppm_err = 1000
 
 [[mcor2.diagnostic_tests]]
 type = "constant_current"
@@ -57,6 +60,7 @@ name = "MCOR 6A"
 max_current = 6
 min_current = -6
 ename = 3
+max_ppm_err = 1000
 
 [[mcor6.diagnostic_tests]]
 type = "constant_current"
@@ -75,6 +79,7 @@ name = "MCOR 12A"
 max_current = 12
 min_current = -12
 ename = 4
+max_ppm_err = 1000
 
 [[mcor12.diagnostic_tests]]
 type = "constant_current"
@@ -93,6 +98,7 @@ name = "MCOR 30A"
 max_current = 30
 min_current = -30
 ename = 5
+max_ppm_err = 1000
 
 [[mcor30.diagnostic_tests]]
 type = "constant_current"

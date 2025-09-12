@@ -6,7 +6,7 @@ from datetime import datetime
 
 def show_plots(data, test_time: int, tbid: str, channel: int, test_num: int, serial_number: str, temp_units="C"):
 	
-	fig, (ax1, ax2, ax4) = plt.subplots(3)
+	fig, (ax1, ax2, ax4) = plt.subplots(3, constrained_layout=True)
 	bench = test_bench.bench_from_id(tbid)
 	title = f"{datetime.fromtimestamp(test_time).strftime("%Y-%m-%d %H:%M:%S")} {bench.name}: Channel {channel} Test #{test_num} for power supply \"{serial_number}\""
 	fig.canvas.manager.set_window_title("Test Results")
@@ -47,15 +47,24 @@ def show_plots(data, test_time: int, tbid: str, channel: int, test_num: int, ser
 
 	ax2.set_title("Temperature & Error vs. Time")
 	
-	ax2.legend()
+	ax2.legend(loc="upper left")
 
 	ax3 = ax2.twinx()
 
 	ax3.set_ylabel("Error (ppm)")
 
 	ax3.plot(time, error, label="Error", color="green")
+	
+	max_err = error.max()
+	max_err_time = time[np.argmax(error)]
+	
+	bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
+	arrowprops=dict(arrowstyle="->",connectionstyle="angle,angleA=0,angleB=60")
+	kw = dict(xycoords='data',textcoords="offset points", arrowprops=arrowprops, bbox=bbox_props, ha="right", va="top")
 
-	ax3.legend()
+	ax3.annotate(f"Max Error: {round(max_err)}ppm", xy=(max_err_time, max_err), xytext=(150, 30), **kw)
+
+	ax3.legend(loc="upper right")
 
 	ax4.set_xlabel(f"Temperature ({temp_units})")
 	ax4.set_ylabel("Error (ppm)")
@@ -75,6 +84,9 @@ def show_plots(data, test_time: int, tbid: str, channel: int, test_num: int, ser
 
 	ax4.set_title(f"Temperature Coefficient: {m} ppm/{temp_units}")
 
-	fig.tight_layout()
+	#fig.tight_layout()
+
+	fig.set_figwidth(12.8)
+	fig.set_figheight(9.6)
 	
 	plt.show()
