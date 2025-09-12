@@ -11,6 +11,8 @@ address = "http://lcls-dev3:8080"
 
 run_path = "/run"
 
+cancel_path = "/cancel"
+
 reports_path = "/reports"
 
 user_agent = "TestBenchInterface/1.0"
@@ -38,7 +40,7 @@ class RunTestRequest:
 
 	def send(self):
 		payload = self.to_dict()
-		response = requests.post(address + run_path, json=payload, headers=get_headers)
+		response = requests.post(address + run_path, json=payload, headers=post_headers)
 		return response
 
 class SupplyTestInfo:
@@ -154,3 +156,8 @@ def download_csv(uuid: str, channel: int, test_number: int, path=None):
 	else:
 		with open(path, "w") as csvfile:
 			csvfile.write(csv.text)
+
+
+def abort_test(uuid: str) -> bool:
+	resp = requests.post(address + cancel_path, json={"uuid": uuid}, headers=post_headers)
+	return resp.ok

@@ -63,7 +63,7 @@ def refresh_tests_list(alert=False, force_rerender=False):
 				Label(running_supply_tests_list_frame, text=str(test.test_number)).grid(row=i+2, column=2)
 				Label(running_supply_tests_list_frame, text=test.serial_num).grid(row=i+2, column=3)
 				Label(running_supply_tests_list_frame, text=test.supply_type.name).grid(row=i+2, column=4)
-				text = "Finished" if test.status == "completed" else ("Running" if test.status == "running" else ("Aborted" if test.status == "aborted" else "Queued"))
+				text = "Finished" if test.status == "completed" else ("Running" if test.status == "running" else ("Aborted - PS Fault" if test.status == "fault" else "Aborted - No Power" if test.status == "no_power" else "Aborted - User" if test.status == "user_canceled" else "Queued"))
 				Label(running_supply_tests_list_frame, text=text).grid(row=i+2, column=5)
 				state = NORMAL if test.status == "completed" or test.status == "aborted" else DISABLED
 				pass_fail = "-"

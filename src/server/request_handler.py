@@ -51,6 +51,9 @@ class SupplyTestInfo:
 		for t in tests:
 			t.pass_fail = "incomplete"
 			t.aborted = False
+			t.aborted_fault = False
+			t.aborted_power = False
+			t.aborted_user = False
 		return SupplyTestInfo(d["channel"], d["serial_num"], d["supply_type"], tests)
 
 
@@ -72,6 +75,34 @@ class RequestHandler(BaseHTTPRequestHandler):
 				try:
 					req = RunTestRequest.from_dict(json.loads(post_data))
 					server.test_runner.enqueue_test(req)
+				except json.JSONDecodeError as e:
+					status = 400
+					response_message["status"] = "error"
+					response_message["error_type"] = "json_decode"
+					response_message["message"] = str(e)
+				except KeyError as e:
+					status = 400
+					response_message["status"] = "error"
+					response_message["error_type"] = "missing_field"
+					response_message["message"] = str(e)	
+				except ValueError as e:
+					status = 400
+					response_message["status"] = "error"
+					response_message["error_type"] = "invalid_value"
+					response_message["message"] = str(e)
+				except Exception as e:
+					status = 500
+					response_message["status"] = "error"
+			else:
+				status = 400
+				response_message["status"] = "error"
+				response_message["error_type"] = "invalid_header"
+				response_meesage["message"] = "`Content-type` header must be `application/json`."
+		elif parsed_path.path == "/cancel":
+			if "application/json" in self.headers["Content-Type"]:
+				try:
+					uuid = json.loads(post_data)["uuid"]
+					server.test_runner.cancel_test(uuid)
 				except json.JSONDecodeError as e:
 					status = 400
 					response_message["status"] = "error"

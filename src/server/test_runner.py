@@ -92,12 +92,17 @@ class TestRequestState:
 		self.start_time = None
 		self.time_requested = time.time() * 1000
 		self.aborted = False
+		self.aborted_user = False
+		self.aborted_fault = False
+		self.aborted_power = False
 
 	def start(self):
 		self.start_time = time.time() * 1000
 
 test_queue: list[TestRequestState] = []
 running_tests: list[TestRequestState] = []
+
+cancel_list: list[str] = []
 
 
 def enqueue_test(test):
@@ -140,12 +145,22 @@ def test_loop():
 					curr_test = supply_test.tests[supply_test.test_number]
 					pvs = {k: v[supply_test.channel] for k, v in bench.pvs.items()}
 					finished = False
-					if not supply_test.is_started:
+					if test.uuid in cancel_list:
+						print(f"Canceling test: {test.uuid}")
+						cancel_list.remove(test.uuid)
+						for t in range(supply_test.test_number, len(supply_test.tests)):
+							supply_test.tests[t].aborted = True
+							supply_test.tests[t].aborted_user = True
+							supply_test.tests[t].pass_fail = "fail"
+						supply_test.test_number = len(supply_test.tests)
+						finished = True
+					elif not supply_test.is_started:
 						supply_test.time_since_last_started = time.time() * 1000
 						start = curr_test.begin(pvs, supply_test.supply_type)
 						if not start:
 							print("Power Supply Failed to start! Aborting test...")
 							curr_test.aborted = True
+							curr_test.aborted_power = True
 							finished = True
 						supply_test.is_started = True
 					else:
@@ -157,6 +172,7 @@ def test_loop():
 						if curr_test.should_abort(pvs):
 							print("Power Supply Fault! Aborting test...")
 							curr_test.aborted = True
+							curr_test.aborted_fault = True
 							finished = True
 					if finished:
 						print(f"finished test {supply_test.test_number + 1} of {len(supply_test.tests)}")
@@ -187,8 +203,8 @@ def test_loop():
 				supply_tests_log_entries = []
 				for sts in test.test_info.supply_test_info:
 					for j in range(len(sts.tests)):
-						supply_tests_log_entries.append(SupplyTestLogEntry(sts.channel + 1, j + 1, sts.serial_num, "aborted" if sts.tests[j].aborted else "completed", sts.supply_type.psid, sts.tests[j].pass_fail, sts.tests[j]))
-				test_log.insert(test.uuid, TestLogEntry(supply_tests_log_entries, bench.tbid, test.start_time, "aborted" if test.aborted else "completed", "pass" if all([le.pass_fail == "pass" for le in supply_tests_log_entries]) else "fail"))
+						supply_tests_log_entries.append(SupplyTestLogEntry(sts.channel + 1, j + 1, sts.serial_num, ("no_power" if sts.tests[j].aborted_power else "fault" if sts.tests[j].aborted_fault else "user_canceled") if sts.tests[j].aborted else "completed", sts.supply_type.psid, sts.tests[j].pass_fail, sts.tests[j]))
+				test_log.insert(test.uuid, TestLogEntry(supply_tests_log_entries, bench.tbid, test.start_time, ("no_power" if test.aborted_power else "fault" if test.aborted_fault else "user_canceled") if test.aborted else "completed", "pass" if all([le.pass_fail == "pass" for le in supply_tests_log_entries]) else "fail"))
 				saved_data_dir.mkdir(parents=True, exist_ok=True)
 				tarfile_name = saved_data_dir / (test.uuid + ".tar.gz")
 				uncompressed_dir = saved_data_dir / test.uuid
@@ -203,3 +219,6 @@ def test_loop():
 		time.sleep(0.5)
 		if request_close:
 			break
+
+def cancel_test(uuid: str):
+	cancel_list.append(uuid)

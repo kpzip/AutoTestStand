@@ -13,6 +13,15 @@ running_tests_list_frame = None
 
 prev_lst = None
 
+def cancel_test(uuid):
+	result = messagebox.askyesno(title="Abort?", message=f"Are you sure you want to abort this test?", parent=running_tests_toplevel)
+	if result:
+		status = server_comms.abort_test(uuid)
+		if status:
+			messagebox.showinfo(title="Success", message=f"Test Aborted.", parent=running_tests_toplevel)
+		else:
+			messagebox.showerror(title="Error", message=f"There was an error aborting the test", parent=running_tests_toplevel)
+
 def refresh_tests_list(alert=False, force_rerender=False):
 	global prev_lst
 	try:
@@ -32,7 +41,7 @@ def refresh_tests_list(alert=False, force_rerender=False):
 				test = lst.tests[i]
 				Label(running_tests_list_frame, text=test.bench.name).grid(row=i+2, column=1)
 				Label(running_tests_list_frame, text=datetime.fromtimestamp(test.time).strftime("%m/%d/%Y %H:%M:%S")).grid(row=i+2, column=2)
-				text = "Finished" if test.status == "completed" else ("Running" if test.status == "running" else ("Aborted" if test.status == "aborted" else "Queued"))
+				text = "Finished" if test.status == "completed" else ("Running" if test.status == "running" else ("Aborted - PS Fault" if test.status == "fault" else "Aborted - No Power" if test.status == "no_power" else "Aborted - User" if test.status == "user_canceled" else "Queued"))
 				Label(running_tests_list_frame, text=text).grid(row=i+2, column=3)
 				pass_fail = "-"
 				pass_fail_color = "black"
@@ -45,6 +54,7 @@ def refresh_tests_list(alert=False, force_rerender=False):
 				Label(running_tests_list_frame, text=pass_fail, fg=pass_fail_color).grid(row=i+2, column=4)
 				is_finished = test.status == "completed"
 				Button(running_tests_list_frame, width=10, text="Details", command=lambda tbid=test.bench.tbid, time=test.time, uuid=test.uuid, isf=is_finished: running_supply_tests.running_supply_tests_window(running_tests_toplevel, uuid, isf, tbid, time)).grid(row=i+2, column=5)
+				Button(running_tests_list_frame, width=10, text="Abort", command=lambda uuid=test.uuid: cancel_test(uuid), state=NORMAL if test.status == "running" or test.status == "queued" else DISABLED).grid(row=i+2, column=6)
 	except Exception as e:
 		if alert:
 			messagebox.showerror(title="Error", message=f"Unable to load running tests: {str(e)}", parent=running_tests_toplevel)

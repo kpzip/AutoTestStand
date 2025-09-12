@@ -16,8 +16,12 @@ class Test(ABC):
 	def add_calculated_data(self, supply):
 		cond = np.logical_not(self.saved_data["RAMPSTATE"])
 		iavg = self.saved_data.loc[cond, "IACT"].mean()
-		self.saved_data.loc[cond, "IAVG"] = iavg
-		self.saved_data.loc[cond, "PPMERR"] = np.absolute((self.saved_data["IACT"] - self.saved_data["IAVG"]) / (supply.max_current if iavg > 0 else supply.min_current))
+		if len(self.saved_data) != 0:
+			self.saved_data.loc[cond, "IAVG"] = iavg
+			self.saved_data.loc[cond, "PPMERR"] = np.absolute((self.saved_data["IACT"] - self.saved_data["IAVG"]) / (supply.max_current if iavg > 0 else supply.min_current))
+		else:
+			self.saved_data["IAVG"] = []
+			self.saved_data["PPMERR"] = []
 	
 	def begin(self, pvs, supply_type):
 		if (state_set_point := pvs.get("STATESETPT")) is not None:
