@@ -9,15 +9,16 @@ def main():
 	global root
 	root = Tk()
 	root.title("Power supply test bench management")
-	root.geometry("500x300")
+	root.geometry("1200x600")
 	
-	mainframe = ttk.Frame(root, padding = "12 12 12 12")
-	mainframe.pack(expand=True, fill=BOTH)
-	mainframe.columnconfigure((1,), weight=1)
+	#mainframe = ttk.Frame(root, padding = "12 12 12 12")
+	#mainframe.pack(expand=True, fill=BOTH)
+	#mainframe.columnconfigure((1,), weight=1)
 
 	
-	ttk.Button(mainframe, text="New Test", width=20, command=lambda: run_tests_window(root)).grid(column=1, row=1, padx=8, pady=8)
-	ttk.Button(mainframe, text="Finished Tests", width=20, command=lambda: running_tests.running_tests_window(root)).grid(column=1, row=2, padx=8, pady=8)
+	#ttk.Button(mainframe, text="New Test", width=20, command=lambda: run_tests_window(root)).grid(column=1, row=1, padx=8, pady=8)
+	#ttk.Button(mainframe, text="Finished Tests", width=20, command=lambda: running_tests.running_tests_window(root)).grid(column=1, row=2, padx=8, pady=8)
+	running_tests.running_tests_window(root)
 
 	root.mainloop()
 	sys.exit(0)

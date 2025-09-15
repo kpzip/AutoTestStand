@@ -155,7 +155,7 @@ def test_loop():
 						supply_test.test_number = len(supply_test.tests)
 						finished = True
 					elif not supply_test.is_started:
-						supply_test.time_since_last_started = time.time() * 1000
+						supply_test.time_since_last_started_ramping = time.time() * 1000
 						start = curr_test.begin(pvs, supply_test.supply_type)
 						if not start:
 							print("Power Supply Failed to start! Aborting test...")
@@ -168,7 +168,7 @@ def test_loop():
 							supply_test.time_since_last_started = time.time() * 1000
 						elapsed = None if supply_test.time_since_last_started is None else time.time() * 1000 - supply_test.time_since_last_started
 						finished = curr_test.tick(pvs, elapsed, time.time() * 1000 - test.start_time)
-						curr_test.record_data(pvs, time.time() * 1000 - supply_test.time_since_last_started)
+						curr_test.record_data(pvs, time.time() * 1000 - supply_test.time_since_last_started_ramping)
 						if curr_test.should_abort(pvs):
 							print("Power Supply Fault! Aborting test...")
 							curr_test.aborted = True
@@ -194,6 +194,7 @@ def test_loop():
 						print(f"Passed: {passed}")
 						print(f"Max Error: {curr_test.saved_data["PPMERR"].max()}")
 						curr_test.pass_fail = "pass" if passed else "fail"
+						supply_test.time_since_last_started = None
 						
 						if supply_test.test_number >= len(supply_test.tests):							
 							supply_test.is_finished = True

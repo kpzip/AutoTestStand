@@ -5,6 +5,7 @@ from datetime import datetime
 
 import client.server_comms as server_comms
 import client.running_supply_tests as running_supply_tests
+import client.run_tests as run_tests
 from client.scroll_frame import VerticalScrolledFrame
 
 running_tests_toplevel = None
@@ -62,9 +63,10 @@ def refresh_tests_list(alert=False, force_rerender=False):
 def running_tests_window(root):
 	global running_tests_toplevel, running_tests_list_frame
 	if running_tests_toplevel is None or not running_tests_toplevel.winfo_exists():
-		running_tests_toplevel = Toplevel(root)
-		running_tests_toplevel.title("Running Tests")
-		running_tests_toplevel.geometry("800x400")
+		#running_tests_toplevel = Toplevel(root)
+		#running_tests_toplevel.title("Running Tests")
+		#running_tests_toplevel.geometry("800x400")
+		running_tests_toplevel = root
 		
 		running_tests_frame = ttk.Frame(running_tests_toplevel)
 		running_tests_frame.pack(expand=True, fill=BOTH)
@@ -91,7 +93,8 @@ def running_tests_window(root):
 		bottom_bar = ttk.Frame(running_tests_frame)
 		bottom_bar.pack(fill="x", side=TOP)
 		
-		Button(bottom_bar, text="Ok", width=10, command=lambda: running_tests_toplevel.destroy()).pack(side=RIGHT, padx=12, pady=12)
+		Button(bottom_bar, text="Exit", width=10, command=lambda: running_tests_toplevel.destroy()).pack(side=RIGHT, padx=12, pady=12)
+		Button(bottom_bar, text="New Test", width=20, command=lambda: run_tests.run_tests_window(running_tests_toplevel)).pack(side=RIGHT, padx=12, pady=12)	
 		
 	else:
 		running_tests_toplevel.lift()

@@ -30,10 +30,10 @@ def save_csv(channel: int, test_number: int, serial_number: str):
 		else:
 			messagebox.showinfo(title="Success", message=f".csv file saved successfully.", parent=running_supply_tests_toplevel)
 
-def plot_csv(channel: int, test_number: int, serial_number: str):
+def plot_csv(channel: int, test_number: int, serial_number: str, supply_type):
 	try:
 		data = server_comms.download_csv(batch_uuid, channel, test_number)
-		plotter.show_plots(data, test_time, tbid, channel, test_number, serial_number)
+		plotter.show_plots(data, test_time, tbid, channel, test_number, serial_number, supply_type)
 	except Exception as e:
 		print(e)
 		thread = threading.Thread(target=lambda: messagebox.showerror(title="Error", message=f"There was an error showing the graphs: {str(e)}", parent=running_supply_tests_toplevel))
@@ -82,7 +82,7 @@ def refresh_tests_list(alert=False, force_rerender=False):
 				Label(running_supply_tests_list_frame, text="-").grid(row=i+2, column=9, padx=25)
 				Label(running_supply_tests_list_frame, text=pass_fail, fg=pass_fail_color).grid(row=i+2, column=10, padx=25)
 				Button(running_supply_tests_list_frame, state=state, width=15, text="Download CSV", command=lambda s=test.serial_num, c=test.channel, n=test.test_number: save_csv(c, n, s)).grid(row=i+2, column=11)
-				Button(running_supply_tests_list_frame, state=state, width=15, text="View Data", command=lambda s=test.serial_num, c=test.channel, n=test.test_number: plot_csv(c, n, s)).grid(row=i+2, column=12)
+				Button(running_supply_tests_list_frame, state=state, width=15, text="View Data", command=lambda s=test.serial_num, c=test.channel, n=test.test_number, t=test.supply_type.psid: plot_csv(c, n, s, t)).grid(row=i+2, column=12)
 	except Exception as e:
 		if alert:
 			print(e)

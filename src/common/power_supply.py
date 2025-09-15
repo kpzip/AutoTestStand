@@ -74,3 +74,9 @@ class PowerSupplyType:
 
 
 supply_types = load_power_supply_types()
+
+def supply_from_id(psid: str):
+	for ps in supply_types:
+		if ps.psid == psid:
+			return ps
+	return None

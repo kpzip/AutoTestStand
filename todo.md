@@ -1,7 +1,7 @@
 # TODO
 
 [x] UUIDS / Redo http get api
-[ ] Merge Main screen and status page
+[x] Merge Main screen and status page
 [x] Make test timer not start until ramp period has ended
 [x] Make the test abort if the power supply fails to start
 [x] Make faults abort the test
@@ -22,3 +22,4 @@
 [x] fix overlapping legengs in plots
 [x] make figure title have test info
 [x] make csv file have test info when saved
+[x] have rampstate be false for a few cycles before starting

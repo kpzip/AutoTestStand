@@ -3,17 +3,24 @@ import pandas as pd
 import numpy as np
 import time
 
+stabilizing_cycles = 3
+
 class Test(ABC):
 
 	@abstractmethod
 	def __init__(self, name):
 		self.name = name
 		self.saved_data = pd.DataFrame(columns=["TIME", "ISETPT", "IACT", "TEMP", "RAMPSTATE", "TIMEHRS"])
+		self.cycles_not_ramping = 0
 
 	def record_data(self, pvs, ms_since_test_started: int):
 		self.saved_data.loc[len(self.saved_data)] = [ms_since_test_started, pvs["ISETPT"].get(), pvs["IACT"].get(), pvs["TEMP"].get(), bool(pvs["RAMPSTATE"].get()), ms_since_test_started / (60 * 60 * 1000)]
 
 	def add_calculated_data(self, supply):
+		# Fix Rampstate variable for intermediate setpoints
+		last_ramp_pos = self.saved_data[self.saved_data["RAMPSTATE"]].last_valid_index()
+		self.saved_data.loc[0:last_ramp_pos + stabilizing_cycles, "RAMPSTATE"] = True
+
 		cond = np.logical_not(self.saved_data["RAMPSTATE"])
 		iavg = self.saved_data.loc[cond, "IACT"].mean()
 		if len(self.saved_data) != 0:
@@ -46,11 +53,15 @@ class Test(ABC):
 		pass
 
 	@abstractmethod
-	def tick(self, pvs, ms_since_test_started: int, ms_elapsed_total: int) -> bool:
+	def tick(self, pvs, ms_since_test_started: int | None, ms_elapsed_total: int) -> bool:
 		pass
 
 	def should_start_timer(self, pvs):
-		return not bool(pvs["RAMPSTATE"].get())
+		if not bool(pvs["RAMPSTATE"].get()):
+			self.cycles_not_ramping += 1
+		else:
+			self.cycles_not_ramping = 0
+		return self.cycles_not_ramping >= stabilizing_cycles
 
 	def should_abort(self, pvs):
 		return "FAULT" in pvs and pvs["FAULT"].get() != 0
@@ -97,7 +108,7 @@ class ConstantCurrentTest(Test):
 	def finish(self, pvs):
 		pvs["ISETPT"].put(0)
 
-	def tick(self, pvs, ms_since_test_started: int, ms_elapsed_total: int) -> bool:
+	def tick(self, pvs, ms_since_test_started: int | None, ms_elapsed_total: int) -> bool:
 		return ms_since_test_started is not None and ms_since_test_started >= self.duration
 	
 	def hours(self):
