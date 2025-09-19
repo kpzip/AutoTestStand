@@ -21,13 +21,15 @@ class Test(ABC):
 	def add_calculated_data(self, supply):
 		# Fix Rampstate variable for intermediate setpoints
 		last_ramp_pos = self.saved_data[self.saved_data["RAMPSTATE"]].last_valid_index()
+		if last_ramp_pos is None:
+			last_ramp_pos = 0
 		self.saved_data.loc[0:last_ramp_pos + stabilizing_cycles, "RAMPSTATE"] = True
 
 		cond = np.logical_not(self.saved_data["RAMPSTATE"])
 		iavg = self.saved_data.loc[cond, "IACT"].mean()
 		if len(self.saved_data) != 0:
 			self.saved_data.loc[cond, "IAVG"] = iavg
-			self.saved_data.loc[cond, "PPMERR"] = np.absolute((self.saved_data["IACT"] - self.saved_data["IAVG"]) / (supply.max_current if iavg > 0 else supply.min_current))
+			self.saved_data.loc[cond, "PPMERR"] = ((self.saved_data["IACT"] - self.saved_data["IAVG"]) / (supply.max_current if iavg > 0 else supply.min_current))
 		else:
 			self.saved_data["IAVG"] = []
 			self.saved_data["PPMERR"] = []

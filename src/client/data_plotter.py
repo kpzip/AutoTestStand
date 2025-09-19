@@ -4,6 +4,9 @@ import numpy as np
 import common.test_bench as test_bench
 import common.power_supply as power_supply
 from datetime import datetime
+import warnings
+
+warnings.simplefilter('ignore', np.exceptions.RankWarning)
 
 def show_plots(data, test_time: int, tbid: str, channel: int, test_num: int, serial_number: str, supply_type_id: str, temp_units="C"):
 	
@@ -57,19 +60,20 @@ def show_plots(data, test_time: int, tbid: str, channel: int, test_num: int, ser
 
 	ax3.plot(time, error, label="Error", color="green")
 
-	y_min, y_max = ax3.get_ylim()
-	y_range = y_max - y_min
-	new_y_max = y_max + y_range * 0.35
-	ax3.set_ylim(bottom=y_min, top=new_y_max)
+	#y_min, y_max = ax3.get_ylim()
+	#y_range = y_max - y_min
+	#new_y_max = y_max + y_range * 0.35
+	#ax3.set_ylim(bottom=y_min, top=new_y_max)
+	ax3.margins(y=0.3)
 	
-	max_err = error.max()
-	max_err_time = time[np.argmax(error)]
+	max_err = error[np.argmax(np.absolute(error))]
+	max_err_time = time[np.argmax(np.absolute(error))]
 	
 	bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
-	arrowprops=dict(arrowstyle="->",connectionstyle="angle,angleA=0,angleB=60")
+	arrowprops=dict(arrowstyle="->",connectionstyle="angle,angleA=0,angleB=" + ("60" if max_err > 0 else "120"))
 	kw = dict(xycoords='data',textcoords="offset points", arrowprops=arrowprops, bbox=bbox_props, ha="right", va="top")
 
-	ax3.annotate(f"Max Error: {max_err:.2g}ppm", xy=(max_err_time, max_err), xytext=(150, 30), **kw)
+	ax3.annotate(f"Max Error: {max_err:.2g}ppm", xy=(max_err_time, max_err), xytext=(130, 25 if max_err > 0 else -15), **kw)
 
 	ax3.legend(loc="upper right")
 
@@ -82,7 +86,7 @@ def show_plots(data, test_time: int, tbid: str, channel: int, test_num: int, ser
 	
 	#print(f"Temperature Coefficient: {m} ppm/{temp_units}")
 
-	bestfit_x = np.linspace(temp.min(), temp.max(), 100)
+	bestfit_x = np.linspace((temp_noramp.max() if temp_units == "F" else temp_c_noramp.min()) - 2, (temp_noramp.max() if temp_units == "F" else temp_c_noramp.max()) + 2, 100)
 	bestfit_y = m * bestfit_x + b
 
 	ax4.plot(bestfit_x, bestfit_y, color="red")

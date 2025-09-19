@@ -148,7 +148,6 @@ def get_csv_file_name(channel: int, test_number: int):
 
 def download_csv(uuid: str, channel: int, test_number: int, path=None):
 	get_path = address + reports_path + "/" + uuid + "/" + get_csv_file_name(channel, test_number)
-	print(get_path)
 	csv = requests.get(get_path, headers=get_headers)
 	#print(csv.text)
 	if path is None:

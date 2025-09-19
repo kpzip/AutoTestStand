@@ -5,6 +5,7 @@ import tarfile
 import json
 import io
 import shutil
+import numpy as np
 
 from common.test_bench import *
 from common.power_supply import *
@@ -77,7 +78,6 @@ class TestLog:
 		saved_data_dir.mkdir(parents=True, exist_ok=True)
 		with open(test_log_path, "w") as f:
 			data = json.dumps(self.to_dict())
-			print(data)
 			f.write(data)
 
 	def insert(self, uuid, entry):
@@ -112,7 +112,6 @@ def enqueue_test(test):
 def test_loop():
 	while True:
 		# See if there are any other tests we can be running right now
-		# todo
 		for i in range(len(test_queue)):
 			q = test_queue[i]
 			is_conflicting = False
@@ -129,9 +128,6 @@ def test_loop():
 				print("Running Test...")
 				break	
 
-		#if len(running_tests) == 0 and len(test_queue) != 0:
-		#	running_tests.append(test_queue.pop(0))
-		#	print("Running Test...")
 		
 		for idx in range(len(running_tests)):
 			test = running_tests[idx]
@@ -190,7 +186,7 @@ def test_loop():
 						supply_test.is_started = False
 						supply_test.test_number += 1
 						max_err = supply_test.supply_type.max_ppm_err
-						passed = curr_test.saved_data["PPMERR"].max() <= max_err * 1e-6 and not curr_test.aborted
+						passed = np.absolute(curr_test.saved_data["PPMERR"]).max() <= max_err * 1e-6 and not curr_test.aborted
 						print(f"Passed: {passed}")
 						print(f"Max Error: {curr_test.saved_data["PPMERR"].max()}")
 						curr_test.pass_fail = "pass" if passed else "fail"

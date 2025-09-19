@@ -59,6 +59,9 @@ class SupplyTestInfo:
 
 class RequestHandler(BaseHTTPRequestHandler):
 	
+	def log_message(self, format, *args):
+		pass
+	
 	def do_POST(self):
 		content_length = int(self.headers['Content-Length'])
 		post_data = self.rfile.read(content_length)

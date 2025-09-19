@@ -10,6 +10,8 @@ import client.server_comms as server_comms
 import client.data_plotter as plotter
 from client.scroll_frame import VerticalScrolledFrame
 
+import common.test_bench as test_bench
+
 running_supply_tests_toplevel = None
 running_supply_tests_list_frame = None
 
@@ -47,6 +49,8 @@ def refresh_tests_list(alert=False, force_rerender=False):
 		lst = server_comms.get_supply_test_reports_list(batch_uuid)
 		if lst != prev_lst or force_rerender:
 			prev_lst = lst
+			for c in running_supply_tests_list_frame.winfo_children():
+				c.destroy()
 			running_supply_tests_list_frame.columnconfigure((1, 2, 3, 4, 5, 6), weight=1)
 			Label(running_supply_tests_list_frame, text="Channel").grid(row=1, column=1)
 			Label(running_supply_tests_list_frame, text="Test No.").grid(row=1, column=2)
@@ -86,7 +90,7 @@ def refresh_tests_list(alert=False, force_rerender=False):
 				def rerender_timer(label, eta):
 					if not label.winfo_exists():
 						return
-					seconds = None if eta is None else int(eta / 1000 - time.time())
+					seconds = None if eta is None else max(0, int(eta / 1000 - time.time()))
 					text="-" if eta is None else f"{seconds // 3600:02d}:{(seconds % 3600) // 60:02d}:{seconds % 60:02d}"
 					label.configure(text=text)
 					label.after(100, lambda l=label, e=eta: rerender_timer(l, e))
@@ -110,7 +114,8 @@ def running_supply_tests_window(root, uuid, is_finished: bool, bench_id: str, ti
 		batch_uuid = uuid
 		has_results = is_finished
 		running_supply_tests_toplevel = Toplevel(root)
-		running_supply_tests_toplevel.title("Running Tests")
+		bench = test_bench.bench_from_id(bench_id)
+		running_supply_tests_toplevel.title(f"Running Tests - {bench.name}")
 		running_supply_tests_toplevel.geometry("1500x600")
 		
 		running_supply_tests_frame = ttk.Frame(running_supply_tests_toplevel)
