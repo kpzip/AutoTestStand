@@ -85,13 +85,13 @@ def refresh_tests_list(alert=False, force_rerender=False):
 				duration = f"{seconds // 3600:02d}:{(seconds % 3600) // 60:02d}:{seconds % 60:02d}"
 				Label(running_supply_tests_list_frame, text=duration).grid(row=i+2, column=8, padx=25)
 				seconds = None if test.eta is None else int(test.eta / 1000 - time.time())
-				countdown = Label(running_supply_tests_list_frame, text="-" if test.eta is None else f"{seconds // 3600:02d}:{(seconds % 3600) // 60:02d}:{seconds % 60:02d}")
+				countdown = Label(running_supply_tests_list_frame, text="-" if test.eta is None else "Ramping..." if test.eta == -1 else f"{seconds // 3600:02d}:{(seconds % 3600) // 60:02d}:{seconds % 60:02d}")
 				countdown.grid(row=i+2, column=9, padx=25)
 				def rerender_timer(label, eta):
 					if not label.winfo_exists():
 						return
 					seconds = None if eta is None else max(0, int(eta / 1000 - time.time()))
-					text="-" if eta is None else f"{seconds // 3600:02d}:{(seconds % 3600) // 60:02d}:{seconds % 60:02d}"
+					text="-" if eta is None else "Ramping..." if eta == -1 else  f"{seconds // 3600:02d}:{(seconds % 3600) // 60:02d}:{seconds % 60:02d}"
 					label.configure(text=text)
 					label.after(100, lambda l=label, e=eta: rerender_timer(l, e))
 				countdown.after(100, lambda l=countdown, e=test.eta: rerender_timer(l, e))

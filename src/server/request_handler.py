@@ -204,6 +204,8 @@ class RequestHandler(BaseHTTPRequestHandler):
 							time = st.time_since_last_started
 							if st.test_number == i and time is not None:
 								eta = time + t.total_duration()
+							elif st.test_number == i:
+								eta = -1
 							tests.append({"channel": st.channel + 1, "test_num": i + 1, "supply_type": st.supply_type.psid, "serial_num": st.serial_num, "status": status, "pass_fail": pass_fail, "test_info": t.to_dict(), "eta": eta})
 				else:
 					test_log = server.test_runner.TestLog.load_from_file()
