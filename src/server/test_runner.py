@@ -169,7 +169,7 @@ def test_loop():
 						elapsed = None if supply_test.time_since_last_started is None else time.time() * 1000 - supply_test.time_since_last_started
 						finished = curr_test.tick(pvs, elapsed, time.time() * 1000 - test.start_time)
 						curr_test.record_data(pvs, time.time() * 1000 - supply_test.time_since_last_started_ramping)
-						if curr_test.should_abort(pvs):
+						if curr_test.should_abort(pvs, bench):
 							print("Power Supply Fault! Aborting test...")
 							curr_test.aborted = True
 							curr_test.aborted_fault = True

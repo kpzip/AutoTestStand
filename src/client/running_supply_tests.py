@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from datetime import datetime, timedelta
 from tkinter import messagebox
+import time
 import threading
 
 import client.server_comms as server_comms
@@ -79,7 +80,17 @@ def refresh_tests_list(alert=False, force_rerender=False):
 				seconds = int(test.test.total_duration() / 1000)
 				duration = f"{seconds // 3600:02d}:{(seconds % 3600) // 60:02d}:{seconds % 60:02d}"
 				Label(running_supply_tests_list_frame, text=duration).grid(row=i+2, column=8, padx=25)
-				Label(running_supply_tests_list_frame, text="-").grid(row=i+2, column=9, padx=25)
+				seconds = None if test.eta is None else int(test.eta / 1000 - time.time())
+				countdown = Label(running_supply_tests_list_frame, text="-" if test.eta is None else f"{seconds // 3600:02d}:{(seconds % 3600) // 60:02d}:{seconds % 60:02d}")
+				countdown.grid(row=i+2, column=9, padx=25)
+				def rerender_timer(label, eta):
+					if not label.winfo_exists():
+						return
+					seconds = None if eta is None else int(eta / 1000 - time.time())
+					text="-" if eta is None else f"{seconds // 3600:02d}:{(seconds % 3600) // 60:02d}:{seconds % 60:02d}"
+					label.configure(text=text)
+					label.after(100, lambda l=label, e=eta: rerender_timer(l, e))
+				countdown.after(100, lambda l=countdown, e=test.eta: rerender_timer(l, e))
 				Label(running_supply_tests_list_frame, text=pass_fail, fg=pass_fail_color).grid(row=i+2, column=10, padx=25)
 				Button(running_supply_tests_list_frame, state=state, width=15, text="Download CSV", command=lambda s=test.serial_num, c=test.channel, n=test.test_number: save_csv(c, n, s)).grid(row=i+2, column=11)
 				Button(running_supply_tests_list_frame, state=state, width=15, text="View Data", command=lambda s=test.serial_num, c=test.channel, n=test.test_number, t=test.supply_type.psid: plot_csv(c, n, s, t)).grid(row=i+2, column=12)

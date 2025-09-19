@@ -189,20 +189,25 @@ class RequestHandler(BaseHTTPRequestHandler):
 					for st in queued_test.test_info.supply_test_info:
 						for i in range(len(st.tests)):
 							t = st.tests[i]
-							tests.append({"channel": st.channel + 1, "test_num": i + 1, "supply_type": st.supply_type.psid, "serial_num": st.serial_num, "status": "queued", "pass_fail": "incomplete", "test_info": t.to_dict()})
+							tests.append({"channel": st.channel + 1, "test_num": i + 1, "supply_type": st.supply_type.psid, "serial_num": st.serial_num, "status": "queued", "pass_fail": "incomplete", "test_info": t.to_dict(), "eta": None})
 				elif running_test is not None:
 					for st in running_test.test_info.supply_test_info:
 						for i in range(len(st.tests)):
 							t = st.tests[i]
 							status = "queued" if i > st.test_number else ("running" if i == st.test_number else ("aborted" if t.aborted else "completed"))
 							pass_fail = t.pass_fail if t.pass_fail is not None else "incomplete"
-							tests.append({"channel": st.channel + 1, "test_num": i + 1, "supply_type": st.supply_type.psid, "serial_num": st.serial_num, "status": status, "pass_fail": pass_fail, "test_info": t.to_dict()})
+							eta = None
+							# Race Condition?
+							time = st.time_since_last_started
+							if st.test_number == i and time is not None:
+								eta = time + t.total_duration()
+							tests.append({"channel": st.channel + 1, "test_num": i + 1, "supply_type": st.supply_type.psid, "serial_num": st.serial_num, "status": status, "pass_fail": pass_fail, "test_info": t.to_dict(), "eta": eta})
 				else:
 					test_log = server.test_runner.TestLog.load_from_file()
 					entry = test_log.entries.get(uuid)
 					if entry is not None:
 						for e in entry.supply_tests:
-							tests.append({"channel": e.channel, "test_num": e.number, "supply_type": e.supply_id, "serial_num": e.serial_number, "status": e.status, "pass_fail": e.pass_fail, "test_info": e.test.to_dict()})
+							tests.append({"channel": e.channel, "test_num": e.number, "supply_type": e.supply_id, "serial_num": e.serial_number, "status": e.status, "pass_fail": e.pass_fail, "test_info": e.test.to_dict(), "eta": None})
 				tests.sort(key=lambda e: e["test_num"])
 				tests.sort(key=lambda e: e["channel"])
 				status = 200

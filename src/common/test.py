@@ -4,6 +4,7 @@ import numpy as np
 import time
 
 stabilizing_cycles = 3
+fault_cycles = 4
 
 class Test(ABC):
 
@@ -12,6 +13,7 @@ class Test(ABC):
 		self.name = name
 		self.saved_data = pd.DataFrame(columns=["TIME", "ISETPT", "IACT", "TEMP", "RAMPSTATE", "TIMEHRS"])
 		self.cycles_not_ramping = 0
+		self.cycles_faulted = 0
 
 	def record_data(self, pvs, ms_since_test_started: int):
 		self.saved_data.loc[len(self.saved_data)] = [ms_since_test_started, pvs["ISETPT"].get(), pvs["IACT"].get(), pvs["TEMP"].get(), bool(pvs["RAMPSTATE"].get()), ms_since_test_started / (60 * 60 * 1000)]
@@ -63,8 +65,16 @@ class Test(ABC):
 			self.cycles_not_ramping = 0
 		return self.cycles_not_ramping >= stabilizing_cycles
 
-	def should_abort(self, pvs):
-		return "FAULT" in pvs and pvs["FAULT"].get() != 0
+	def should_abort(self, pvs, bench):
+		is_faulted = "FAULT" in pvs and (pvs["FAULT"].get() != 0) != bench.fault_inverted
+		if is_faulted:
+			self.cycles_faulted += 1
+			if self.cycles_faulted >= fault_cycles:
+				return True
+			return False
+		else:
+			self.cycles_faulted = 0
+			return False
 
 	def __str__(self):
 		return self.name

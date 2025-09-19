@@ -11,6 +11,11 @@ def from_dict(n: str, d: dict, try_connect=True):
 
 	pvs = d.get("pvs")
 
+	fault_inverted = d.get("fault_signal_inverted")
+
+	if fault_inverted != True:
+		fault_inverted = False
+
 
 	# Basic input validation
 	if name is None:
@@ -60,7 +65,7 @@ def from_dict(n: str, d: dict, try_connect=True):
 				if not p.wait_for_connection():
 					print("[Warning] PV `{p.pvname}` failed to connect. Maybe its name has changed?")
 	
-	return TestBench(name, channels, pvs, n)
+	return TestBench(name, channels, pvs, n, fault_inverted)
 
 def load_test_benches(try_connect=True):
 	benches_list: list = []
@@ -88,11 +93,12 @@ def load_test_benches(try_connect=True):
 
 class TestBench:
 	
-	def __init__(self, name: str, channels: int, pvs: dict[str, list[str]], tbid: str):
+	def __init__(self, name: str, channels: int, pvs: dict[str, list[str]], tbid: str, fault_inverted: bool):
 		self.name = name
 		self.channels = channels
 		self.pvs = pvs
 		self.tbid = tbid
+		self.fault_inverted = fault_inverted
 
 	def __str__(self):
 		return f"Test Bench `{self.name}` with {self.channels} channel(s)"
